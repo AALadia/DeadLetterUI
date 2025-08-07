@@ -139,6 +139,27 @@ def replayDeadLetter():
     
 
 
+@app.route('/loginWithGoogle', methods=['POST'])
+
+def loginWithGoogle():
+    if request.is_json: 
+        data = request.get_json()
+
+        firebaseUserObject = data['firebaseUserObject']
+
+
+    try:
+        res = ApiRequests().loginWithGoogle(firebaseUserObject)
+        access_token = create_access_token(identity=res["_id"])
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'message': str(e),'data':None,'status':400}), 400
+
+    return jsonify({"message": "Login successful","data":res,"status":200, "access_token": access_token}), 200
+    
+
+
 @app.route('/mockPost', methods=['POST'])
 
 def mockPost():

@@ -1,13 +1,11 @@
-import Image from "next/image";
-import App from "./deadLetterDashboard/page";
-import type { AppProps } from 'next/app';
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import AuthPage from "./auth/page";
+
 
 export default function Home() {
+
   return (
-    
     <div>
-      <App />
+        <AuthPage />
     </div>
   );
 }

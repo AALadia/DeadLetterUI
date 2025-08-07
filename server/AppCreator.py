@@ -619,7 +619,7 @@ if __name__ == '__main__':
 
         # Generate imports and class definition
         tsCode = f"""/* eslint-disable @typescript-eslint/no-explicit-any */
-import Server from "./Server.ts";
+import Server from "./Server";
 {allSchemaImportsString}
 
     class ServerRequests extends Server {{
@@ -666,7 +666,7 @@ export default Server;"""
 
         print(f"Project root: {projectRoot}")
 
-        clientDir = os.path.join(projectRoot, 'client\\src\\app\\api')
+        clientDir = os.path.join(projectRoot, 'client\\deadletter\\app\\api')
 
         with open(os.path.join(clientDir, 'Server.ts'), 'w') as f:
             f.write(serverCode)
@@ -696,7 +696,7 @@ export default Server;"""
         classes = self.__get_classes_from_module(mod)
 
         input_dir = os.path.join(os.getcwd() + '\\Server\\schemas')
-        output_dir = os.path.join(os.getcwd() + '\\client\\src\\app\\schemas')
+        output_dir = os.path.join(os.getcwd() + '\\client\\deadletter\\app\\schemas')
 
         for x in classes:
             className = x.__name__

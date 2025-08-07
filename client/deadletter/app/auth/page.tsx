@@ -1,22 +1,12 @@
-'use client'
 
 import React from 'react';
-import { Box, Button, Typography, Paper, Stack } from '@mui/material';
-import { GoogleLogin, googleLogout } from '@react-oauth/google';
-import { auth, googleProvider } from '../firebase'; // adjust path
-import { signInWithPopup } from 'firebase/auth';
+import { Box, Typography, Paper, Stack } from '@mui/material';
+import getFirebaseKey from '../_utils/getFirebaseKey'
+import LoginButton from './LoginButton';
+
 
 export default function AuthPage() {
-  const handleGoogleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      console.log('User logged in:', user);
-      // You can redirect or store user here
-    } catch (error) {
-      console.error('Google Sign-in error:', error);
-    }
-  };
+    
 
   return (
     <Box
@@ -33,9 +23,7 @@ export default function AuthPage() {
           <Typography variant="h5" fontWeight="bold">
             Welcome to My App
           </Typography>
-          <Button variant="contained" onClick={handleGoogleLogin}>
-            Login with Google
-          </Button>
+            <LoginButton  />
         </Stack>
       </Paper>
     </Box>

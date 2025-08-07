@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Server from "./Server.ts";
+import Server from "./Server";
 import type { Id, Version, Topicname, Subscribername, Endpoint, Errormessage, Retrycount, Status, Createdat, Lasttriedat, DeadLetter, Originalmessage } from '../schemas/DeadLetterSchema.ts';
 import type { Name, Email, Password, Id1, Value, Description, Collectionstransacted, Unauthorizedmessage, UserRoles, Usertype, User, Role } from '../schemas/UserSchema.ts';
 
@@ -102,6 +102,26 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         });
         const data = await res.json();
         
+        return data;
+        } catch (error) {
+            console.error("Error:", error);
+            return {"message": "Failed to fetch data", "error": error};
+        }
+    }
+
+    async loginWithGoogle(firebaseUserObject: Object): Promise<any> {
+        try {
+        const res = await fetch(`${this.apiUrl}/loginWithGoogle`, {
+            method: 'POST',
+            headers: {
+            "Content-Type": "application/json",
+            
+            },
+            body: JSON.stringify({"firebaseUserObject": firebaseUserObject}),
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        localStorage.setItem("access_token", data.access_token)
         return data;
         } catch (error) {
             console.error("Error:", error);

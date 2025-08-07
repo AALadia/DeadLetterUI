@@ -1,6 +1,9 @@
 from ApiRequests import ApiRequests
 from mongoDb import db
 from builderObjects import createUserObject
+import pytest
+from objects import User
+from firebaseObject import firebaseObject, firebaseObject2
 
 
 def wipeDatabase():
@@ -19,9 +22,30 @@ def test_deadLetter():
                                    'Test error message')
     deadLetters = db.read({'_id': 'testTopic'}, 'DeadLetters', findOne=True)
     res = ApiRequests().replayDeadLetter(deadLetterId='testTopic',
-                                   userId=user['_id'])
+                                         userId=user['_id'])
     assert res['_version'] == 2
     assert res['status'] == 'success'
+
+
+def test_auth():
+    try:
+        wipeDatabase()
+        user = ApiRequests().loginWithGoogle(firebaseObject)
+        user = db.read({'_id': user['_id']}, 'Users', findOne=True)
+        assert user['_id'] == firebaseObject['uid']
+        assert user['email'] == firebaseObject['email']
+        assert user['password'] == None
+        for x in user['roles']:
+            assert x['value'] == True
+        # create another user
+        user2 = ApiRequests().loginWithGoogle(firebaseObject2)
+        user2 = db.read({'_id': user2['_id']}, 'Users', findOne=True)
+        assert user2['_id'] == firebaseObject2['uid']
+        for x in user2['roles']:
+            assert x['value'] == False
+
+    finally:
+        wipeDatabase()
 
 
 def test_create20DeadLetters():
@@ -40,6 +64,7 @@ def test_create20DeadLetters():
 
 
 if __name__ == "__main__":
+    test_auth()
     test_deadLetter()
     test_create20DeadLetters()
     print("All tests passed successfully.")

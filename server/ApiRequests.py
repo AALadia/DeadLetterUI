@@ -7,6 +7,21 @@ from objects import User, DeadLetter
 from builderObjects import createDeadLetterObject
 from functions import retryMessage
 
+class AuthActions():
+    @route_config(httpMethod='POST',
+                  jwtRequired=False,
+                  createAccessToken=True,
+                  successMessage='Login successful')
+    def loginWithGoogle(self, firebaseUserObject: dict) -> User:
+        from AuthHandler import AuthHandlerGoogle
+        user = AuthHandlerGoogle(
+            firebaseUserObject=firebaseUserObject).googleLoginFlow()
+        userExists = db.read({'_id': user.id}, 'Users', findOne=True)
+        if userExists == None:
+            user = db.create(user.model_dump(by_alias=True), 'Users')
+            user = User(**user)
+        return user.model_dump(by_alias=True)
+
 
 class UserActions():
 
@@ -111,12 +126,13 @@ class MockServerForTesting():
         else:
             raise ValueError("Message must be a dictionary")
 
-class ApiRequests(UserActions, DeadLetterActions,MockServerForTesting):
+class ApiRequests(UserActions, DeadLetterActions,AuthActions,MockServerForTesting):
 
     def __init__(self):
         UserActions.__init__(self)
         DeadLetterActions.__init__(self)
         MockServerForTesting.__init__(self)
+        AuthActions.__init__(self)
 
 
 if __name__ == '__main__':
