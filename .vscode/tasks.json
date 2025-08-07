@@ -1,0 +1,186 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Activate venv",
+        "type": "shell",
+        "command": "venv\\Scripts\\activate",
+        "options": {
+          "cwd": "${workspaceFolder}\\server",
+          "shell": {
+            "executable": "cmd.exe",
+            "args": [
+              "/c"
+            ]
+          }
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "venv Server app.py",
+        "type": "shell",
+        "command": "venv\\Scripts\\activate && python app.py",
+        "options": {
+          "cwd": "${workspaceFolder}\\server",
+          "shell": {
+            "executable": "cmd.exe",
+            "args": [
+              "/c"
+            ]
+          }
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": true,
+          "panel": "shared"
+        },
+        "problemMatcher": [],
+        "detail": "Activate virtual environment and run python app.py"
+      },
+      {
+        "label": "venv Sticker server app.py",
+        "type": "shell",
+        "command": "venv\\Scripts\\activate && python app.py",
+        "options": {
+          "cwd": "${workspaceFolder}\\stickerPrinterServer",
+          "shell": {
+            "executable": "cmd.exe",
+            "args": [
+              "/c"
+            ]
+          }
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": true,
+          "panel": "shared"
+        },
+        "problemMatcher": [],
+        "detail": "Activate virtual environment and run python app.py"
+      },
+      {
+        "label": "Run Both Servers",
+        "dependsOn": [
+          "venv Server app.py",
+          "venv Sticker server app.py"
+        ],
+        "dependsOrder": "parallel",
+        "problemMatcher": [],
+        "detail": "Run both servers, main and sticker server"
+      },
+      {
+        "label": "pytest",
+        "type": "shell",
+        "command": "venv\\Scripts\\activate && timeout /t 3 && pytest --cov=objects --cov-report=term-missing",
+        "options": {
+          "cwd": "${workspaceFolder}\\server",
+          "shell": {
+        "executable": "cmd.exe",
+        "args": [
+          "/c"
+        ]
+          }
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": true,
+          "panel": "shared"
+        },
+        "problemMatcher": [],
+        "detail": "Activate virtual environment, wait for the server to start, and run pytest"
+      },
+      {
+        "label": "pytest and Sticker server",
+        "dependsOn": [
+          "venv Sticker server app.py",
+          "pytest"
+        ],
+        "dependsOrder": "parallel",
+        "problemMatcher": [],
+        "detail": "Run sticker server and then run pytest"
+      },
+      {
+        "label": "Client npm run dev",
+        "type": "shell",
+        "command": "npm run dev",
+        "options": {
+          "cwd": "${workspaceFolder}\\client",
+          "shell": {
+            "executable": "cmd.exe",
+            "args": [
+              "/c"
+            ]
+          }
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": true,
+          "panel": "shared"
+        },
+        "problemMatcher": [],
+        "detail": "Activate virtual environment and run npm run dev"
+      },
+      {
+        "label": "Client npm run test App",
+        "type": "shell",
+        "command": "npm run test App",
+        "options": {
+          "cwd": "${workspaceFolder}\\client",
+          "shell": {
+            "executable": "cmd.exe",
+            "args": [
+              "/c"
+            ]
+          }
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": true,
+          "panel": "shared"
+        },
+        "problemMatcher": [],
+        "detail": "Activate virtual environment and run npm run dev"
+      },
+      {
+        "label": "Create mock data",
+        "type": "shell",
+        "command": "python mockData.py units=${input:unitQuantity}",
+        "options": {
+          "cwd": "${workspaceFolder}\\server",
+          "shell": {
+            "executable": "cmd.exe",
+            "args": [
+              "/c"
+            ]
+          }
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": true,
+          "panel": "shared"
+        },
+        "problemMatcher": [],
+        "detail": "creates mock data for superAdmin, gatherer, operator, and specified number of units"
+      },
+    ],
+    "inputs": [
+      {
+        "id": "unitQuantity",
+        "type": "promptString",
+        "description": "Enter number of units to create mock data for:",
+        "default": "5",
+      }
+    ]
+}

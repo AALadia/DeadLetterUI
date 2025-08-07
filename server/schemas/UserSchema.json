@@ -1,0 +1,138 @@
+{
+    "$defs": {
+        "Role": {
+            "properties": {
+                "_id": {
+                    "description": "Role id",
+                    "title": "Id",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "Role value",
+                    "title": "Value",
+                    "type": "boolean"
+                },
+                "description": {
+                    "description": "Role description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "collectionsTransacted": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": [],
+                    "description": "List of collections transacted by role",
+                    "title": "Collectionstransacted"
+                },
+                "unauthorizedMessage": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": "",
+                    "description": "Message to show when user is unauthorized to perform this role action",
+                    "title": "Unauthorizedmessage"
+                }
+            },
+            "required": [
+                "_id",
+                "value",
+                "description"
+            ],
+            "title": "Role",
+            "type": "object"
+        },
+        "UserRoles": {
+            "items": {
+                "$ref": "#/$defs/Role"
+            },
+            "title": "UserRoles",
+            "type": "array"
+        }
+    },
+    "properties": {
+        "_id": {
+            "title": "Id",
+            "type": "string"
+        },
+        "name": {
+            "description": "Name field",
+            "title": "Name",
+            "type": "string"
+        },
+        "email": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "description": "email field",
+            "title": "Email"
+        },
+        "password": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "description": "Password field",
+            "title": "Password"
+        },
+        "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+        },
+        "roles": {
+            "$ref": "#/$defs/UserRoles"
+        },
+        "userType": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "description": "User type",
+            "title": "Usertype"
+        },
+        "_version": {
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+        }
+    },
+    "required": [
+        "_id",
+        "name",
+        "createdAt",
+        "roles"
+    ],
+    "title": "User",
+    "type": "object",
+    "additionalProperties": false
+}

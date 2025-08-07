@@ -1,0 +1,88 @@
+{
+    "properties": {
+        "_id": {
+            "description": "Unique ID of the failed message",
+            "title": "Id",
+            "type": "string"
+        },
+        "_version": {
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+        },
+        "originalMessage": {
+            "additionalProperties": true,
+            "description": "The original message payload that failed",
+            "title": "Originalmessage",
+            "type": "object"
+        },
+        "topicName": {
+            "description": "Name of the topic the message was received from",
+            "title": "Topicname",
+            "type": "string"
+        },
+        "subscriberName": {
+            "description": "Name of the subscriber or service that failed",
+            "title": "Subscribername",
+            "type": "string"
+        },
+        "endpoint": {
+            "description": "The endpoint that failed to process the message",
+            "title": "Endpoint",
+            "type": "string"
+        },
+        "errorMessage": {
+            "description": "Error that caused the failure",
+            "title": "Errormessage",
+            "type": "string"
+        },
+        "retryCount": {
+            "default": 0,
+            "description": "Number of retry attempts made",
+            "title": "Retrycount",
+            "type": "integer"
+        },
+        "status": {
+            "default": "pending",
+            "description": "Current retry status",
+            "enum": [
+                "pending",
+                "success",
+                "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+        },
+        "createdAt": {
+            "description": "When the dead letter was created",
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+        },
+        "lastTriedAt": {
+            "anyOf": [
+                {
+                    "format": "date-time",
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "description": "When it was last retried",
+            "title": "Lasttriedat"
+        }
+    },
+    "required": [
+        "_id",
+        "originalMessage",
+        "topicName",
+        "subscriberName",
+        "endpoint",
+        "errorMessage"
+    ],
+    "title": "DeadLetter",
+    "type": "object",
+    "additionalProperties": false
+}

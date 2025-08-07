@@ -1,0 +1,37 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+    {
+        "name": "Server Debug app.py",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/server/app.py",
+        "console": "integratedTerminal",
+        "preLaunchTask": "Activate venv"
+        },
+        {
+            "name": "Client debug test App",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "bash",
+            "runtimeArgs": [
+              "-c",
+              "cd client && npm run test App"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+          },
+          {
+            "name": "Launch Chrome against localhost",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}/src",
+            "sourceMaps": true,
+            "trace": true,
+            "sourceMapPathOverrides": {
+              "webpack:///src/*": "${webRoot}/*"
+            }
+          }
+    ]
+  }
