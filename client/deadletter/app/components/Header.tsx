@@ -1,7 +1,8 @@
 import { useAppContext } from '../contexts/AppContext';
+import LogoutButton from '../auth/LogoutButton';
 
 export const Header = () => {
-  const { user, logout } = useAppContext();
+  const { user } = useAppContext();
   const email = (user?.email ?? '') as string;
   return (
     <header className="mb-6 w-full flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -12,12 +13,7 @@ export const Header = () => {
       {user && (
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-600 max-w-[180px] truncate" title={email}>{email || 'No email'}</span>
-          <button
-            onClick={logout}
-            className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded hover:bg-red-700 transition disabled:opacity-50"
-          >
-            Logout
-          </button>
+          <LogoutButton />
         </div>
       )}
     </header>

@@ -100,5 +100,6 @@ class DeadLetter(BaseModel):
     def markAsSuccess(self) -> None:
         self.status = "success"
 
-    def markAsFailed(self) -> None:
+    def markAsFailed(self,errorMessage) -> None:
         self.status = "failed"
+        self.errorMessage = errorMessage

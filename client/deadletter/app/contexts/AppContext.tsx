@@ -5,7 +5,8 @@ import { User } from '../schemas/UserSchema';
 import { useRouter } from 'next/navigation';
 import { initializeApp } from "firebase/app";
 import getFirebaseKey from '../_utils/getFirebaseKey';
-import { getAuth } from 'firebase/auth';
+import { getAuth,onAuthStateChanged } from 'firebase/auth';
+import serverRequests from '../_lib/serverRequests';
 
 type AppContextType = {
   user: User | null;
@@ -13,7 +14,6 @@ type AppContextType = {
   firebaseAuth: ReturnType<typeof getAuth>;
   router: ReturnType<typeof useRouter>;
   isAuthLoading: boolean;
-  logout: () => void;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -27,6 +27,28 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
     }
   const firebaseApp = initializeApp(getFirebaseKey(firebaseApiKey));
   const firebaseAuth = getAuth(firebaseApp);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+        // User is signed in, you can get user details here
+        if (user) {
+          serverRequests.loginWithGoogle(user).then((userData) => {
+            console.log('User data from server:', userData);
+            setUser(userData.data);
+            localStorage.setItem('access_token', userData?.access_token || '');
+            router.push('/deadLetterDashboard'); // Redirect to dashboard after login
+          })
+      } else {
+        // User is signed out
+        setUser(null);
+        localStorage.removeItem('access_token');
+        router.push('/'); // Redirect to home or login page
+      }
+    });
+    return () => unsubscribe()
+    }, [firebaseAuth]);
+
+  
   
 
   // STATES
@@ -36,36 +58,6 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
   // ROUTER
   const router = useRouter();
 
-  // HYDRATE USER FROM LOCALSTORAGE
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('user');
-      if (stored) {
-        const parsed: User = JSON.parse(stored);
-        setUser(parsed);
-      }
-    } catch (e) {
-      console.warn('Failed to parse stored user', e);
-    } finally {
-      setIsAuthLoading(false);
-    }
-  }, []);
-
-  // PERSIST USER
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-      localStorage.removeItem('access_token');
-    }
-  }, [user]);
-
-  const logout = () => {
-    setUser(null);
-    router.push('/');
-  };
-
   // VALUES
   const appContextValues = {
     firebaseAuth,
@@ -73,7 +65,6 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
     user,
     setUser,
     isAuthLoading,
-    logout,
   };
 
   return (

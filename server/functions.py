@@ -14,7 +14,7 @@ def retryMessage(deadLetter: DeadLetter) -> DeadLetter:
     try:
         res = serverRequest.post(last_segment, payload={'message': deadLetter.originalMessage})
         deadLetter.markAsSuccess()
-    except:
-        deadLetter.markAsFailed()
+    except Exception as e:
+        deadLetter.markAsFailed(str(e))
 
     return deadLetter

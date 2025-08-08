@@ -10,22 +10,20 @@ import { Button } from '@mui/material';
 
 
 const LoginButton = () => {
-    const { setUser, firebaseAuth, router } = useAppContext();
-    const handleGoogleLogin = async () => {
+  const {firebaseAuth} = useAppContext();
+
+
+  const handleGoogleLogin = async () => {
     const googleAuthProvider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(firebaseAuth, googleAuthProvider);
-      const user = await serverRequests.loginWithGoogle(result.user);
-      console.log('User logged in:', user);
-      setUser(user.data); // server returns { message, data, status, access_token }
-      router.push('/deadLetterDashboard');
+      await signInWithPopup(firebaseAuth, googleAuthProvider);
     } catch (error) {
       console.error('Google Sign-in error:', error);
     }
   };
   return (
     <Button variant="contained" onClick={handleGoogleLogin}>
-        Login with Google
+      Login with Google
     </Button>
   )
 }

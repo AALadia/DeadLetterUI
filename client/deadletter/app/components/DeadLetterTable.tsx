@@ -14,6 +14,7 @@ interface DeadLetterRow {
   retryCount: number;
   createdAt: string;
   lastTriedAt?: string | null;
+  errorMessage?: string;
 }
 
 export const DeadLetterTable = () => {
@@ -25,7 +26,7 @@ export const DeadLetterTable = () => {
   const loadDeadLetters = async () => {
     setLoading(true);
     setError(null);
-    const res = await serverRequests.listDeadLetters();
+    const res = await serverRequests.listDeadLetters(null);
     if (res.status !== 200) {
       const msg = res.message || 'Failed to load dead letters';
       setError(`${msg}${res.status === 401 ? ' (unauthorized - please re-login)' : ''}`);
@@ -42,11 +43,12 @@ export const DeadLetterTable = () => {
     }
   }, [user]);
 
-  const handleRetry = async (id: string) => {
+  const handleRetry = async (id: string, target: 'production' | 'localhost') => {
     const dl = deadLetters.find(d => d._id === id);
     if (!dl) return;
 
     setDeadLetters(prev => prev.map(d => d._id === id ? { ...d, status: 'pending' } : d));
+    console.log(user)
     const res = await serverRequests.replayDeadLetter(id, user?._id || '');
     if (res.status === 200) {
       const updated = res.data;
@@ -80,7 +82,7 @@ export const DeadLetterTable = () => {
               <td className="p-3 font-mono text-xs">{item.topicName}</td>
               <td className="p-3">{item.subscriberName}</td>
               <td className="p-3 text-blue-600 truncate max-w-xs" title={item.endpoint}>{item.endpoint}</td>
-              <td className="p-3 truncate max-w-xs" title={item.originalMessage?.errorMessage}>{item.originalMessage?.errorMessage || '-'}</td>
+              <td className="p-3 truncate max-w-xs" title={item.errorMessage}>{item.errorMessage || '-'}</td>
               <td className="p-3">
                 <span className={`px-2 py-1 rounded text-white text-xs ${
                   item.status === 'pending' ? 'bg-yellow-500' :
@@ -92,13 +94,24 @@ export const DeadLetterTable = () => {
               </td>
               <td className="p-3 text-center">{item.retryCount}</td>
               <td className="p-3">
-                <button
-                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                  onClick={() => handleRetry(item._id)}
-                  disabled={item.status === 'success'}
-                >
-                  Retry
-                </button>
+                <div className="flex gap-1 flex-wrap">
+                  <button
+                    className="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+                    onClick={() => handleRetry(item._id, 'production')}
+                    disabled={item.status === 'success'}
+                    title="Retry against production endpoint"
+                  >
+                    Retry Prod
+                  </button>
+                  <button
+                    className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                    onClick={() => handleRetry(item._id, 'localhost')}
+                    disabled={item.status === 'success'}
+                    title="Retry against localhost (debug)"
+                  >
+                    Retry Local
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

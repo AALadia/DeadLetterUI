@@ -7,17 +7,14 @@ import { useAppContext } from '../contexts/AppContext';
 import LocalEndpointMenu from '../components/LocalEndpointMenu';
 
 export default function DeadLetterDashboard() {
-  const { user, router, isAuthLoading } = useAppContext();
+  const { user, router } = useAppContext();
 
   useEffect(() => {
-    if (!isAuthLoading && !user) {
+    if (!user) {
       router.push('/');
     }
-  }, [user, isAuthLoading, router]);
+  }, [user, router]);
 
-  if (isAuthLoading) {
-    return <div className="p-6 text-sm">Loading...</div>;
-  }
 
   if (!user) {
     return null; // redirect in effect

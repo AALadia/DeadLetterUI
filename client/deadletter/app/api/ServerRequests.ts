@@ -8,7 +8,7 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         super();
     }
 
-    
+
     async setUserRole(userIdToChangeRole: string, userType: string, userId: string): Promise<any> {
         try {
         const res = await fetch(`${this.apiUrl}/setUserRole`, {
@@ -49,7 +49,7 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         }
     }
 
-    async fetchUserList(projection: Object): Promise<any> {
+    async fetchUserList(projection: Record<string, any>): Promise<any> {
         try {
         const res = await fetch(`${this.apiUrl}/fetchUserList`, {
             method: 'POST',
@@ -69,7 +69,7 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         }
     }
 
-    async createDeadLetter(id: string, originalMessage: Object, topicName: string, subscriberName: string, endpoint: string, errorMessage: string): Promise<any> {
+    async createDeadLetter(id: string, originalMessage: Record<string, any>, topicName: string, subscriberName: string, endpoint: string, errorMessage: string): Promise<any> {
         try {
         const res = await fetch(`${this.apiUrl}/createDeadLetter`, {
             method: 'POST',
@@ -109,7 +109,27 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         }
     }
 
-    async loginWithGoogle(firebaseUserObject: Object): Promise<any> {
+    async listDeadLetters(projection: Record<string, any> | null): Promise<any> {
+        try {
+        const res = await fetch(`${this.apiUrl}/listDeadLetters`, {
+            method: 'POST',
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify({"projection": projection}),
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        
+        return data;
+        } catch (error) {
+            console.error("Error:", error);
+            return {"message": "Failed to fetch data", "error": error};
+        }
+    }
+
+    async loginWithGoogle(firebaseUserObject: Record<string, any>): Promise<any> {
         try {
         const res = await fetch(`${this.apiUrl}/loginWithGoogle`, {
             method: 'POST',
@@ -129,7 +149,7 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         }
     }
 
-    async mockPost(message: Object): Promise<any> {
+    async mockPost(message: Record<string, any>): Promise<any> {
         try {
         const res = await fetch(`${this.apiUrl}/mockPost`, {
             method: 'POST',
@@ -148,27 +168,6 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
             return {"message": "Failed to fetch data", "error": error};
         }
     }
-
-    async listDeadLetters(filter: Record<string, unknown> = {}, projection: Record<string, number> | null = null): Promise<any> {
-        try {
-        const res = await fetch(`${this.apiUrl}/listDeadLetters`, {
-            method: 'POST',
-            headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`
-            },
-            body: JSON.stringify({ filter, projection }),
-            cache: 'no-store'
-        });
-        const data = await res.json();
-        
-        return data;
-        } catch (error) {
-            console.error("Error:", error);
-            return {"message": "Failed to fetch data", "error": error};
-        }
-    }
-
 }
 
 export default ServerRequests;

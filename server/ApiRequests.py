@@ -129,11 +129,11 @@ class DeadLetterActions():
                   jwtRequired=True,
                   successMessage='Dead letters fetched successfully')
     def listDeadLetters(self,
-                        filter: dict | None = None,
+                        
                         projection: dict | None = None) -> List[DeadLetter]:
         """Fetch a list of dead letters with optional filter and projection."""
-        query = filter or {}
-        deadLetters = db.read(query, 'DeadLetters', projection=projection)
+        
+        deadLetters = db.read({'status':'failed'}, 'DeadLetters', projection=projection)
         return deadLetters
 
 

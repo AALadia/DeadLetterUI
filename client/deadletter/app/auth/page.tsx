@@ -9,6 +9,8 @@ export default function AuthPage() {
     
 
   return (
+    <div>
+
     <Box
       sx={{
         height: '100vh',
@@ -27,5 +29,6 @@ export default function AuthPage() {
         </Stack>
       </Paper>
     </Box>
+    </div>
   );
 }
