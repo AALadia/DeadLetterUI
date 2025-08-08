@@ -149,7 +149,26 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         }
     }
 
+    async listDeadLetters(filter: Record<string, unknown> = {}, projection: Record<string, number> | null = null): Promise<any> {
+        try {
+        const res = await fetch(`${this.apiUrl}/listDeadLetters`, {
+            method: 'POST',
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify({ filter, projection }),
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        
+        return data;
+        } catch (error) {
+            console.error("Error:", error);
+            return {"message": "Failed to fetch data", "error": error};
+        }
+    }
+
 }
 
 export default ServerRequests;
-        

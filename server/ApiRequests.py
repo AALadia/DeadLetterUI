@@ -7,7 +7,9 @@ from objects import User, DeadLetter
 from builderObjects import createDeadLetterObject
 from functions import retryMessage
 
+
 class AuthActions():
+
     @route_config(httpMethod='POST',
                   jwtRequired=False,
                   createAccessToken=True,
@@ -92,9 +94,9 @@ class DeadLetterActions():
     @route_config(httpMethod='POST',
                   jwtRequired=False,
                   successMessage='Dead letter message created successfully')
-    def createDeadLetter(self, id: str, originalMessage: dict,
-                         topicName: str, subscriberName: str,
-                         endpoint: str, errorMessage: str) -> dict:
+    def createDeadLetter(self, id: str, originalMessage: dict, topicName: str,
+                         subscriberName: str, endpoint: str,
+                         errorMessage: str) -> dict:
         deadLetterObject = createDeadLetterObject(
             id=id,
             originalMessage=originalMessage,
@@ -108,15 +110,35 @@ class DeadLetterActions():
 
     @route_config(httpMethod='POST',
                   jwtRequired=True,
-                  successMessage='Dead letter message updated successfully',roleAccess='canReplayDeadLetter')
-    def replayDeadLetter(self, deadLetterId: str,userId:str) -> dict:
-        deadLetter = db.read({'_id': deadLetterId}, 'DeadLetters', findOne=True)
+                  successMessage='Dead letter message updated successfully',
+                  roleAccess='canReplayDeadLetter')
+    def replayDeadLetter(self, deadLetterId: str, userId: str) -> dict:
+        deadLetter = db.read({'_id': deadLetterId},
+                             'DeadLetters',
+                             findOne=True)
         deadLetter = DeadLetter(**deadLetter)
         deadLetter = retryMessage(deadLetter)
-        deadLetter = db.update({'_id': deadLetter.id,'_version': deadLetter.version}, deadLetter.model_dump(by_alias=True), 'DeadLetters')
+        deadLetter = db.update(
+            {
+                '_id': deadLetter.id,
+                '_version': deadLetter.version
+            }, deadLetter.model_dump(by_alias=True), 'DeadLetters')
         return deadLetter
 
+    @route_config(httpMethod='POST',
+                  jwtRequired=True,
+                  successMessage='Dead letters fetched successfully')
+    def listDeadLetters(self,
+                        filter: dict | None = None,
+                        projection: dict | None = None) -> List[DeadLetter]:
+        """Fetch a list of dead letters with optional filter and projection."""
+        query = filter or {}
+        deadLetters = db.read(query, 'DeadLetters', projection=projection)
+        return deadLetters
+
+
 class MockServerForTesting():
+
     @route_config(httpMethod='POST',
                   jwtRequired=False,
                   successMessage='Mock server response created successfully')
@@ -126,7 +148,9 @@ class MockServerForTesting():
         else:
             raise ValueError("Message must be a dictionary")
 
-class ApiRequests(UserActions, DeadLetterActions,AuthActions,MockServerForTesting):
+
+class ApiRequests(UserActions, DeadLetterActions, AuthActions,
+                  MockServerForTesting):
 
     def __init__(self):
         UserActions.__init__(self)

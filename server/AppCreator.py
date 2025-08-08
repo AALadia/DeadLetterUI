@@ -592,7 +592,7 @@ if __name__ == '__main__':
 
     def __getSchemaImports(self, schemasGenerated):
         cd = os.getcwd()
-        schemaFolderDirectory = cd + '\\client\\src\\app\schemas'
+        schemaFolderDirectory = cd + '\\client\\deadletter\\app\schemas'
         #get all folder names
         schemaFiles = os.listdir(schemaFolderDirectory)
         importStrings = []
