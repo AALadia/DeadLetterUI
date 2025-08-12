@@ -80,6 +80,7 @@ def fetchUserList():
 def createDeadLetter():
     if request.is_json:
         data = request.get_json()
+        print(data)
         id = data['id']
         originalMessage = data['originalMessage']
         topicName = data['topicName']

@@ -425,7 +425,7 @@ class PubSubMockDb(mongoDb, Singleton):
     def __init__(self, uri=None, databaseName=None):
         super().__init__(uri, databaseName)
 
-db = mainDb()
+db = mainDb('mongodb+srv://cloudRunDeadLetter:2Zgf5clqssM7TLCt@deadletter.hjd3a6i.mongodb.net/?retryWrites=true&w=majority&appName=deadletter','deadletter')
 testDb = TestDb()
 pubSubMockDb = PubSubMockDb(None,'pubSubMockDb')
 
