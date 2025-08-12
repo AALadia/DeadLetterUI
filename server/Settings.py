@@ -20,8 +20,7 @@ class Setting(BaseModel):
 class DefaultSettings():
     def __init__(self):
         self.settings = [
-            Setting(_id="fragileCheckEnabled", value=False, description="Require fragile check when second verifying"),
-            Setting(_id="qualityCheckEnabled", value=False, description="Require quality check when second verifying"),
+            # Setting(_id="fragileCheckEnabled", value=False, description="Require fragile check when second verifying"),
         ]
 
     def getSettings(self) -> List[Setting]:

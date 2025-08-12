@@ -113,7 +113,29 @@
         "type": "shell",
         "command": "npm run dev",
         "options": {
-          "cwd": "${workspaceFolder}\\client",
+          "cwd": "${workspaceFolder}\\client\\deadletter",
+          "shell": {
+            "executable": "cmd.exe",
+            "args": [
+              "/c"
+            ]
+          }
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": true,
+          "panel": "shared"
+        },
+        "problemMatcher": [],
+        "detail": "Activate virtual environment and run npm run dev"
+      },
+            {
+        "label": "Start Application",
+        "type": "shell",
+        "command": "npm run dev",
+        "options": {
+          "cwd": "${workspaceFolder}\\client\\deadletter",
           "shell": {
             "executable": "cmd.exe",
             "args": [
