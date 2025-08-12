@@ -36,11 +36,11 @@ class mongoDb():
 
         # connect to the appropriate uri based on the environment
         elif AppConfig().getEnvironment() == 'cloudprod':
-            uri = os.getenv('MONGO_URI_ACCOUNTING')
+            uri = os.getenv('MONGO_URI')
 
             if uri is None:
                 raise Exception(
-                    'MONGO_URI_ACCOUNTING environment variable is not set')
+                    'MONGO_URI environment variable is not set')
 
             self.client = MongoClient(uri,
                                       server_api=ServerApi('1'),
