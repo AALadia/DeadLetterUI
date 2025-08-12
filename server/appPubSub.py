@@ -3,6 +3,7 @@ import logging
 from mongoDb import mongoDb
 from PubSubRequests import PubSubRequests
 import traceback
+from pubSub import PubSub
 
 main = Blueprint('main', __name__)
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +14,11 @@ logging.basicConfig(level=logging.INFO)
 def createAccountingInventoryOrder():
     if request.is_json:
         data = request.get_json()
-        order = data['order']
+        data = message["data"]
+        message = data["message"]
+        data = PubSub().decodeMessage(data)
     try:
-        res = PubSubRequests().createAccountingInventoryOrder(order)
+        res = PubSubRequests().createAccountingInventoryOrder(data)
     except Exception as e:
         traceback.print_exc()
         return jsonify({'message': str(e),'data':None,'status':400}), 400

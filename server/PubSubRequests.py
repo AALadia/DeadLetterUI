@@ -1,6 +1,4 @@
 from route_config import route_config
-from pubSub import PubSub
-from ApiRequests import ApiRequests
 
 
 class Sample():
@@ -8,13 +6,10 @@ class Sample():
     @route_config(httpMethod='POST',
                   jwtRequired=False,
                   successMessage='Order created successfully',
-                  roleAccess='test')
-    def createMessageFromPubSub(self, order: dict):
-        message = data['message']
-        data = message['data']
-        data = PubSub().decodeMessage(data)
-        ApiRequests().createDeadLetter(data['_id'],data,'12345','4212',)
-        
+                  roleAccess='test'
+                  )
+    def createAccountingInventoryOrder(self):
+        pass
 
 
 class PubSubRequests(Sample):

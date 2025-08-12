@@ -368,6 +368,7 @@ class MockDataConsumer(Singleton):
         return {'res': res, 'message': data}
 
 
+
 if __name__ == '__main__':
     # Example usage
     data = {'hello': 'world'}

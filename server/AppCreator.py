@@ -150,6 +150,7 @@ class AppCreator:
         'from mongoDb import mongoDb',
         'from PubSubRequests import PubSubRequests',
         'import traceback',
+        'from pubSub import PubSub'
     ]
 
     APP_FLASK_CONFIG = [
@@ -265,13 +266,13 @@ if __name__ == '__main__':
 """)
 
     def _function_code(self, name: str, params: Parameters,
-                       meta: Dict[str, Any], kind: str) -> str:
+                       meta: Dict[str, Any], kind: str,method:str) -> str:
         atFunction = 'app' if kind == 'app' else 'main'
         className = 'ApiRequests' if kind == 'app' else 'PubSubRequests'
 
-        parameters_check = '    if request.is_json:\n        data = request.get_json()\n' if params.names else ''
+        parameters_check = '    if request.is_json:\n        data = request.get_json()\n' if method == 'POST' else ''
         parameters_code = params.as_assignment_block(indent=8)
-
+        decode_message = '        data = message["data"]\n        message = data["message"]\n        data = PubSub().decodeMessage(data)\n' if kind == 'appPubSub' else ''
         jwt_decorator = '@jwt_required()' if meta['jwtRequired'] else ''
         current_user_code = '        current_user = get_jwt_identity()\n' if (
             meta['jwtRequired'] and not meta['createAccessToken']) else ''
@@ -290,13 +291,13 @@ if __name__ == '__main__':
         else:
             response_code = f'    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
 
-        body_call = f"{className}().{name}({params.comma_join()})" if params.names else f"{className}().{name}()"
+        body_call = f"{className}().{name}({params.comma_join()})" if params.names else f"{className}().{name}(data)"
 
         return f"""
 @{atFunction}.route('/{name}', methods=['{meta['httpMethod']}'])
 {jwt_decorator}
 def {name}():
-{parameters_check}{parameters_code}{current_user_code}    try:
+{parameters_check}{parameters_code}{decode_message}{current_user_code}    try:
         res = {body_call}
 {access_token_code}    except Exception as e:
         traceback.print_exc()
@@ -311,7 +312,7 @@ def {name}():
             fileName = 'ApiRequests' if kind == 'app' else 'PubSubRequests'
             self._validate_route_meta(name, meta, fileName)
             params = self._parameters(func)
-            out.append(self._function_code(name, params, meta, kind))
+            out.append(self._function_code(name, params, meta, kind,func.httpMethod))
         return "\n".join(out)
 
     # ----------------------------- TS generation ----------------------------- #
