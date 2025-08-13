@@ -9,6 +9,11 @@ class DeadLetterActions():
     def createDeadLetter(self, _id: str, originalMessage: dict, topicName: str,
                          subscriberName: str, endpoint: str,
                          errorMessage: str) -> dict:
+
+        # idempotency check
+        if db.read({'_id': _id}, 'DeadLetters', findOne=True):
+            return 'data already exists'
+
         deadLetterObject = createDeadLetterObject(
             id=_id,
             originalMessage=originalMessage,
