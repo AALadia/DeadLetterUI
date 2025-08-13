@@ -426,10 +426,8 @@ class PubSubMockDb(mongoDb, Singleton):
         super().__init__(uri, databaseName)
 
 
-if AppConfig().getIsDevEnvironment():
-    db = TestDb()
-else:
-    db = mainDb('mongodb+srv://cloudRunDeadLetter:2Zgf5clqssM7TLCt@deadletter.hjd3a6i.mongodb.net/?retryWrites=true&w=majority&appName=deadletter','deadletter')
+
+db = mainDb('mongodb+srv://cloudRunDeadLetter:2Zgf5clqssM7TLCt@deadletter.hjd3a6i.mongodb.net/?retryWrites=true&w=majority&appName=deadletter','deadletter')
 pubSubMockDb = PubSubMockDb(None,'pubSubMockDb')
 
 if __name__ == '__main__':
