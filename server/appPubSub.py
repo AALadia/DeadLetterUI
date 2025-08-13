@@ -15,7 +15,6 @@ def createDeadLetter():
     if request.is_json:
         data = request.get_json()
         data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])
-        print('decodedData',data)
         _id = data["message"]["data"]['_id']
         originalMessage = data["message"]["data"]['originalMessage']
         topicName = data["message"]["data"]['topicName']
@@ -26,9 +25,9 @@ def createDeadLetter():
         subscriberName = data["subscription"]
         endpoint = ""
         errorMessage = ""
-        print(data)
         publisherProjectId = data["message"]["attributes"]["publisherProjectId"]
         publisherProjectName = data["message"]["attributes"]["publisherProjectName"]
+        originalMessage = data["message"]["data"]
     try:
         res = PubSubRequests().createDeadLetter(_id, originalMessage, topicName, subscriberName, endpoint, errorMessage)
     except Exception as e:
