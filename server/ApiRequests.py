@@ -6,6 +6,8 @@ from utils import generateRandomString
 from objects import User, DeadLetter
 from builderObjects import createDeadLetterObject
 from functions import retryMessage
+from AppConfig import AppConfig
+
 
 
 class AuthActions():
@@ -90,24 +92,6 @@ class UserActions():
 
 
 class DeadLetterActions():
-
-    @route_config(httpMethod='POST',
-                  jwtRequired=False,
-                  successMessage='Dead letter message created successfully')
-    def createDeadLetter(self, id: str, originalMessage: dict, topicName: str,
-                         subscriberName: str, endpoint: str,
-                         errorMessage: str) -> dict:
-        deadLetterObject = createDeadLetterObject(
-            id=id,
-            originalMessage=originalMessage,
-            topicName=topicName,
-            subscriberName=subscriberName,
-            endpoint=endpoint,
-            errorMessage=errorMessage)
-        res = db.create(deadLetterObject.model_dump(by_alias=True),
-                        'DeadLetters')
-        return res
-
     @route_config(httpMethod='POST',
                   jwtRequired=True,
                   successMessage='Dead letter message updated successfully',

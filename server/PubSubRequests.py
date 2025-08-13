@@ -1,18 +1,27 @@
 from route_config import route_config
-
-
-class Sample():
+from builderObjects import createDeadLetterObject
+from mongoDb import db
+class DeadLetterActions():
 
     @route_config(httpMethod='POST',
                   jwtRequired=False,
-                  successMessage='Order created successfully',
-                  roleAccess='test'
-                  )
-    def createAccountingInventoryOrder(self):
-        pass
+                  successMessage='Dead letter message created successfully')
+    def createDeadLetter(self, _id: str, originalMessage: dict, topicName: str,
+                         subscriberName: str, endpoint: str,
+                         errorMessage: str) -> dict:
+        deadLetterObject = createDeadLetterObject(
+            id=_id,
+            originalMessage=originalMessage,
+            topicName=topicName,
+            subscriberName=subscriberName,
+            endpoint=endpoint,
+            errorMessage=errorMessage)
+        res = db.create(deadLetterObject.model_dump(by_alias=True),
+                        'DeadLetters')
+        return res
 
 
-class PubSubRequests(Sample):
+class PubSubRequests(DeadLetterActions):
 
     def __init__(self):
-        Sample.__init__(self)
+        DeadLetterActions.__init__(self)

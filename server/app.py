@@ -75,26 +75,6 @@ def fetchUserList():
     return jsonify({"message": "User list fetched successfully","status":200, "current_user": current_user, "data": res}), 200
 
 
-@app.route('/createDeadLetter', methods=['POST'])
-
-def createDeadLetter():
-    if request.is_json:
-        data = request.get_json()
-        id = data['id']
-        originalMessage = data['originalMessage']
-        topicName = data['topicName']
-        subscriberName = data['subscriberName']
-        endpoint = data['endpoint']
-        errorMessage = data['errorMessage']
-    try:
-        res = ApiRequests().createDeadLetter(id, originalMessage, topicName, subscriberName, endpoint, errorMessage)
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({'message': str(e),'data':None,'status':400}), 400
-
-    return jsonify({"message": "Dead letter message created successfully", "status":200, "data": res}), 200
-
-
 @app.route('/replayDeadLetter', methods=['POST'])
 @jwt_required()
 def replayDeadLetter():

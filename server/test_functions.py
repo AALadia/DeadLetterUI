@@ -1,9 +1,12 @@
 from ApiRequests import ApiRequests
+from PubSubRequests import PubSubRequests
 from mongoDb import db
 from builderObjects import createUserObject
 import pytest
 from objects import User
 from firebaseObject import firebaseObject, firebaseObject2
+
+
 
 
 def wipeDatabase():
@@ -16,7 +19,7 @@ def test_deadLetter():
     wipeDatabase()
     user = createUserObject()
     user = db.create(user.model_dump(by_alias=True), 'Users')
-    ApiRequests().createDeadLetter('testTopic', {'test': 'value'},
+    PubSubRequests().createDeadLetter('testTopic', {'test': 'value'},
                                    'testTopicName', 'testSubscriber',
                                    'http://127.0.0.1:5000/mockPost',
                                    'Test error message')
@@ -53,7 +56,7 @@ def test_create20DeadLetters():
 
     ### Create 20 dead letters with different IDs
     for i in range(20):
-        ApiRequests().createDeadLetter(id=f'testTopic_{i}',
+        PubSubRequests().createDeadLetter(id=f'testTopic_{i}',
                                        originalMessage={'test': f'value_{i}'},
                                        topicName='testTopicName',
                                        subscriberName='testSubscriber',

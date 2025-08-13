@@ -34,8 +34,8 @@ def _compute_project_root(start: Path) -> Path:
 PROJECT_ROOT: Path = _compute_project_root(Path(__file__).resolve().parent)
 SERVER_DIR: Path = PROJECT_ROOT / 'server'
 CLIENT_DIR: Path = PROJECT_ROOT / 'client'
-CLIENT_DEADLETTER_DIR: Path = CLIENT_DIR / 'deadletter'
-CLIENT_APP_DIR: Path = CLIENT_DEADLETTER_DIR / 'app'
+CLIENT_APP_DIR: Path = CLIENT_DIR / 'deadletter'
+CLIENT_APP_DIR: Path = CLIENT_APP_DIR / 'app'
 CLIENT_SCHEMAS_DIR: Path = CLIENT_APP_DIR / 'schemas'
 SERVER_SCHEMAS_DIR: Path = SERVER_DIR / 'schemas'
 CLIENT_API_DIR: Path = CLIENT_APP_DIR / 'api'
@@ -113,11 +113,16 @@ def py_annotation_to_ts(ann: Any) -> str:
 class Parameters:
     names: List[str] = field(default_factory=list)
 
-    def as_assignment_block(self, indent: int = 8) -> str:
+    def as_assignment_block(self, indent: int = 8, kind: str = 'app') -> str:
         if not self.names:
             return ""
         pad = " " * indent
-        return "\n".join(f"{pad}{n} = data['{n}']" for n in self.names) + "\n"
+        if kind == 'app':
+            dictName = 'data'
+        if kind == 'appPubSub':
+            dictName = 'data["message"]["data"]'
+        return "\n".join(f"{pad}{n} = {dictName}['{n}']"
+                         for n in self.names) + "\n"
 
     def comma_join(self) -> str:
         return ", ".join(self.names)
@@ -145,11 +150,9 @@ class AppCreator:
     ]
 
     APP_PUBSUB_IMPORTS = [
-        'from flask import Blueprint, jsonify, request',
-        'import logging',
+        'from flask import Blueprint, jsonify, request', 'import logging',
         'from mongoDb import mongoDb',
-        'from PubSubRequests import PubSubRequests',
-        'import traceback',
+        'from PubSubRequests import PubSubRequests', 'import traceback',
         'from pubSub import PubSub'
     ]
 
@@ -266,13 +269,15 @@ if __name__ == '__main__':
 """)
 
     def _function_code(self, name: str, params: Parameters,
-                       meta: Dict[str, Any], kind: str,method:str) -> str:
+                       meta: Dict[str, Any], kind: str, method: str) -> str:
         atFunction = 'app' if kind == 'app' else 'main'
         className = 'ApiRequests' if kind == 'app' else 'PubSubRequests'
 
         parameters_check = '    if request.is_json:\n        data = request.get_json()\n' if method == 'POST' else ''
-        parameters_code = params.as_assignment_block(indent=8)
-        decode_message = '        data = message["data"]\n        message = data["message"]\n        data = PubSub().decodeMessage(data)\n' if kind == 'appPubSub' else ''
+        parameters_code = params.as_assignment_block(indent=8, kind=kind)
+        decode_message = '        data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])\n' if kind == 'appPubSub' else ''
+        pubSubAttributes = '        topicName = data["message"]["attributes"]["topicName"]\n        subscriberName = data["subscription"]\n        endpoint = ""\n        errorMessage = ""\n        publisherProjectId = data["message"]["attributes"]["publisherProjectId"]\n        publisherProjectName = data["message"]["attributes"]["publisherProjectName"]\n' if kind == 'appPubSub' else ''
+
         jwt_decorator = '@jwt_required()' if meta['jwtRequired'] else ''
         current_user_code = '        current_user = get_jwt_identity()\n' if (
             meta['jwtRequired'] and not meta['createAccessToken']) else ''
@@ -297,7 +302,7 @@ if __name__ == '__main__':
 @{atFunction}.route('/{name}', methods=['{meta['httpMethod']}'])
 {jwt_decorator}
 def {name}():
-{parameters_check}{parameters_code}{decode_message}{current_user_code}    try:
+{parameters_check}{decode_message}{parameters_code}{pubSubAttributes}{current_user_code}    try:
         res = {body_call}
 {access_token_code}    except Exception as e:
         traceback.print_exc()
@@ -312,7 +317,8 @@ def {name}():
             fileName = 'ApiRequests' if kind == 'app' else 'PubSubRequests'
             self._validate_route_meta(name, meta, fileName)
             params = self._parameters(func)
-            out.append(self._function_code(name, params, meta, kind,func.httpMethod))
+            out.append(
+                self._function_code(name, params, meta, kind, func.httpMethod))
         return "\n".join(out)
 
     # ----------------------------- TS generation ----------------------------- #

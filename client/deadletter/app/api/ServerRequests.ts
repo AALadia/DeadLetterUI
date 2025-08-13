@@ -69,26 +69,6 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         }
     }
 
-    async createDeadLetter(id: string, originalMessage: Record<string, any>, topicName: string, subscriberName: string, endpoint: string, errorMessage: string): Promise<any> {
-        try {
-        const res = await fetch(`${this.apiUrl}/createDeadLetter`, {
-            method: 'POST',
-            headers: {
-            "Content-Type": "application/json",
-            
-            },
-            body: JSON.stringify({"id": id, "originalMessage": originalMessage, "topicName": topicName, "subscriberName": subscriberName, "endpoint": endpoint, "errorMessage": errorMessage}),
-            cache: 'no-store'
-        });
-        const data = await res.json();
-        
-        return data;
-        } catch (error) {
-            console.error("Error:", error);
-            return {"message": "Failed to fetch data", "error": error};
-        }
-    }
-
     async replayDeadLetter(deadLetterId: string, userId: string): Promise<any> {
         try {
         const res = await fetch(`${this.apiUrl}/replayDeadLetter`, {
