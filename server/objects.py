@@ -85,13 +85,13 @@ class DeadLetter(BaseModel):
             raise ValueError("Datetime must be timezone-aware")
         return value.astimezone(datetime.timezone.utc)
 
-    @field_validator('endpoint', mode='before')
-    def validate_url(cls, v: str) -> str:
-        try:
-            Url(v)  # validate only
-        except:
-            raise ValueError("Endpoint must be a valid URL")
-        return v
+    # @field_validator('endpoint', mode='before')
+    # def validate_url(cls, v: str) -> str:
+    #     try:
+    #         Url(v)  # validate only
+    #     except:
+    #         raise ValueError("Endpoint must be a valid URL")
+    #     return v
 
     def retryMessage(self) -> None:
         self.retryCount += 1
@@ -100,6 +100,6 @@ class DeadLetter(BaseModel):
     def markAsSuccess(self) -> None:
         self.status = "success"
 
-    def markAsFailed(self,errorMessage) -> None:
+    def markAsFailed(self, errorMessage) -> None:
         self.status = "failed"
         self.errorMessage = errorMessage
