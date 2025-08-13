@@ -121,7 +121,7 @@ class Parameters:
             dictName = 'data'
         if kind == 'appPubSub':
             dictName = 'data["message"]["data"]'
-        return "\n".join(f"{pad}{n} = {dictName}['{n}']"
+        return "\n".join(f"{pad}{n} = {dictName}.get('{n}')"
                          for n in self.names) + "\n"
 
     def comma_join(self) -> str:
@@ -272,7 +272,7 @@ if __name__ == '__main__':
                        meta: Dict[str, Any], kind: str, method: str) -> str:
         atFunction = 'app' if kind == 'app' else 'main'
         className = 'ApiRequests' if kind == 'app' else 'PubSubRequests'
-
+        
         parameters_check = '    if request.is_json:\n        data = request.get_json()\n' if method == 'POST' else ''
         parameters_code = params.as_assignment_block(indent=8, kind=kind)
         decode_message = '        data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])\n' if kind == 'appPubSub' else ''

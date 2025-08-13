@@ -15,12 +15,12 @@ def createDeadLetter():
     if request.is_json:
         data = request.get_json()
         data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])
-        _id = data["message"]["data"]['_id']
-        originalMessage = data["message"]["data"]['originalMessage']
-        topicName = data["message"]["data"]['topicName']
-        subscriberName = data["message"]["data"]['subscriberName']
-        endpoint = data["message"]["data"]['endpoint']
-        errorMessage = data["message"]["data"]['errorMessage']
+        _id = data["message"]["data"].get('_id')
+        originalMessage = data["message"]["data"].get('originalMessage')
+        topicName = data["message"]["data"].get('topicName')
+        subscriberName = data["message"]["data"].get('subscriberName')
+        endpoint = data["message"]["data"].get('endpoint')
+        errorMessage = data["message"]["data"].get('errorMessage')
         topicName = data["message"]["attributes"]["topicName"]
         subscriberName = data["subscription"]
         endpoint = ""
