@@ -4,7 +4,9 @@ from typing import Optional
 from google.cloud import pubsub_v1
 from google.oauth2 import service_account
 from utils import generateRandomString
-
+import json
+import base64
+from pubSub import PubSub
 
 def test_deadLetter():
     cwd = os.path.dirname(os.path.abspath(__file__))
@@ -15,9 +17,10 @@ def test_deadLetter():
 
     #publish to createsalesorder topic
     topic_name = "createSalesOrder"
-    data = {"_id": generateRandomString()}
-    # convert to byte string
-    data = str(data).encode("utf-8")
+    data = {"_id": generateRandomString(),'customer':'ladidadi'}
+
+    data = PubSub()._serialize_for_pubsub(data)
+    
     future = publisher.publish('projects/online-store-paperboy/topics/' +
                                topic_name,
                                data=data)

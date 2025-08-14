@@ -160,24 +160,31 @@ class PubSub():
         projectNameConsumers: list[str] = None,
         publishToPubSubMockDb=False,
     ):
+        """Publish a message.
 
-        if self.isProductionEnvironment and self.test == True:
-            raise Exception(
-                'You cannot run a test in a production environment')
+        Behaviors:
+          - If running against real Pub/Sub (prod/test): only at the final step do we JSON-serialize (if dict) and encode to bytes.
+          - If using local mock (publishToPubSubMockDb): we keep the original dict structure (no forced string conversion) so tests can assert on native JSON.
 
-        if not isinstance(message, str):
-            message = self.convertToJson(message)
+        Args:
+          message: dict (preferred) or str. Dicts are preserved until serialization boundary.
+        """
 
-        if self.test == True or self.isProductionEnvironment:
-            if self.publisher == None:
-                raise Exception(
-                    'you must authenticate credentials first. Use authenticateCredentails()'
-                )
+        if self.isProductionEnvironment and self.test:
+            raise Exception('You cannot run a test in a production environment')
+
+        # Real Pub/Sub path
+        if self.test or self.isProductionEnvironment:
+            if self.publisher is None:
+                raise Exception('you must authenticate credentials first. Use authenticateCredentails()')
+
+            if not isinstance(message, (str, dict)):
+                raise TypeError('message must be str or dict')
 
             topicExists = self._checkIfTopicExists(topicName)
             if not topicExists:
                 print(f"Topic {topicName} does not exist")
-                return "Topic does not exist"
+                return {"status": "error", "error": "Topic does not exist"}
 
             attrs = {
                 'publisherProjectId': self.projectId,
@@ -186,24 +193,30 @@ class PubSub():
             }
 
             topicPath = self.publisher.topic_path(self.projectId, topicName)
-            data = message.encode("utf-8")
-            future = self.publisher.publish(topicPath, data, **attrs)
-            return future.result()
-        elif publishToPubSubMockDb:
+            data_bytes = self._serialize_for_pubsub(message)
+            future = self.publisher.publish(topicPath, data_bytes, **attrs)
+            try:
+                message_id = future.result(timeout=15)
+                return {"status": "published", "messageId": message_id}
+            except Exception as e:
+                return {"status": "error", "error": str(e)}
+
+        # Local mock path
+        if publishToPubSubMockDb:
             if projectNameConsumers is None:
-                raise ValueError(
-                    "projectNameConsumers must be provided when using local Pub/Sub mock."
-                )
-            # create mock payload
+                raise ValueError("projectNameConsumers must be provided when using local Pub/Sub mock.")
+            if not isinstance(message, (str, dict)):
+                raise TypeError('message must be str or dict for mock publish')
+
+            # create mock payload (store dict as-is; str stays str)
             gmt_plus_8 = datetime.timezone(datetime.timedelta(hours=8))
             now_in_gmt_plus_8 = datetime.datetime.now(gmt_plus_8)
             now_in_utc = now_in_gmt_plus_8.astimezone(datetime.timezone.utc)
-            formatted_datetime = now_in_utc.isoformat(
-                timespec='milliseconds').replace('+00:00', 'Z')
+            formatted_datetime = now_in_utc.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
             req = {
                 'body': {
                     'message': {
-                        'data': message,
+                        'data': message if isinstance(message, dict) else self._maybe_parse_json_string(message),
                         'messageId': '1234567890',
                         'message_id': '1234567890',
                         'publishTime': formatted_datetime,
@@ -212,13 +225,36 @@ class PubSub():
                 }
             }
             createMockData(
-                MockData(data=req,
-                         projectNameConsumers=[
-                             x.name for x in projectNameConsumers
-                         ],
-                         consumeFunctionName=topicName,
-                         index=_getIndex(),
-                         type='pubSub'), pubSubMockDb)
+                MockData(
+                    data=req,
+                    projectNameConsumers=[x.name for x in projectNameConsumers],
+                    consumeFunctionName=topicName,
+                    index=_getIndex(),
+                    type='pubSub'
+                ),
+                pubSubMockDb
+            )
+            return {"status": "mocked", "stored": True}
+
+        return {"status": "noop", "reason": "Neither real publish nor mock requested"}
+
+    def _serialize_for_pubsub(self, message: str | dict) -> bytes:
+        """Serialize message to bytes for Pub/Sub.
+        Dict -> JSON bytes. Str -> UTF-8 bytes.
+        """
+        if isinstance(message, dict):
+            return self.convertToJson(message).encode('utf-8')
+        if isinstance(message, str):
+            return message.encode('utf-8')
+        raise TypeError('Unsupported message type for serialization')
+
+    def _maybe_parse_json_string(self, message: str | dict):
+        if isinstance(message, dict):
+            return message
+        try:
+            return json.loads(message)
+        except Exception:
+            return message
 
     def pushToTestGoogleCloudFunction(self, message):
         return self.publishMessage('test', message, test=True)

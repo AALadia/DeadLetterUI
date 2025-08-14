@@ -3,7 +3,6 @@ from objects import DeadLetter, User
 import datetime
 from ServerRequest import ServerRequest
 from utils import split_url_and_last_segment
-from pubSub import PubSub
 import os
 from google.oauth2 import service_account
 import json
