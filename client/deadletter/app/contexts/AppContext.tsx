@@ -15,7 +15,7 @@ type AppContextType = {
   firebaseAuth: ReturnType<typeof getAuth>;
   router: ReturnType<typeof useRouter>;
   isAuthLoading: boolean;
-  showSnackbar: (message: string, duration?: number) => void;
+  showSnackbar: (serverResponse: ServerResponseType, duration?: number) => void;
   openSnackBar: boolean;
   setOpenSnackbar: (open: boolean) => void;
   snackbarMessage: string | null;
@@ -94,6 +94,7 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
     snackbarMessage,
     setSnackbarMessage,
     snackbarType,
+    
   };
 
   return (
