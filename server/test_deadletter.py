@@ -6,7 +6,7 @@ from google.oauth2 import service_account
 from utils import generateRandomString
 import json
 import base64
-from pubSub import PubSub
+from pubSub import PubSub,PubsubMessage
 
 def test_deadLetter():
     cwd = os.path.dirname(os.path.abspath(__file__))
@@ -18,12 +18,16 @@ def test_deadLetter():
     #publish to createsalesorder topic
     topic_name = "createSalesOrder"
     data = {"_id": generateRandomString(),'customer':'ladidadi'}
-
     data = PubSub()._serialize_for_pubsub(data)
+
+    attrs = {'topicName' : 'testTopicName','publisherProjectId':'starPackCebu','publisherProjectName':'starPackPhilippines'}
+
+
     
     future = publisher.publish('projects/online-store-paperboy/topics/' +
                                topic_name,
-                               data=data)
+                               data=data,
+                               **attrs)
     res = future.result()
     if res:
         print(f"Message published to {topic_name}: {res}")

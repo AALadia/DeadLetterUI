@@ -13,8 +13,7 @@ class DeadLetterActions():
                   successMessage='Dead letter message created successfully')
     def createDeadLetter(self, _id: str, originalMessage: dict, topicName: str,
                          subscriberName: str, endpoint: str, errorMessage: str,
-                         publisherProjectId: str,
-                         publisherProjectName: str) -> dict:
+                         ) -> dict:
 
         # idempotency check
         if db.read({'_id': _id}, 'DeadLetters', findOne=True):
@@ -36,13 +35,13 @@ class DeadLetterActions():
         if len(pretty_original) > 5000:  # safety truncation
             pretty_original = pretty_original[:5000] + "\n... (truncated)"
 
-        subject = f"Dead Letter: {topicName} / {publisherProjectName}"
+        subject = f"Dead Letter: {subscriberName}"
         html_email = f"""
 <!DOCTYPE html>
 <html lang=\"en\">
 <head>
     <meta charset=\"UTF-8\" />
-    <title>New Dead Letter - {publisherProjectName}</title>
+    <title>New Dead Letter - {subscriberName}</title>
     <meta name=\"color-scheme\" content=\"light dark\" />
     <style>
         body {{ font-family: Arial, sans-serif; background:#f5f7fa; margin:0; padding:24px; }}
@@ -67,7 +66,7 @@ class DeadLetterActions():
     <div class=\"card\">
         <div class=\"header\">
             <h1>New Dead Letter Created</h1>
-            <p style=\"margin:4px 0 0; font-size:13px; opacity:.85;\">Project: {publisherProjectName} ({publisherProjectId})</p>
+            <p style=\"margin:4px 0 0; font-size:13px; opacity:.85;\">Project: {subscriberName})</p>
         </div>
         <div style=\"padding:24px; color:#0f172a;\">
             <p style=\"margin-top:0;\">A new dead letter message has been captured and stored in the dashboard.</p>
@@ -77,8 +76,6 @@ class DeadLetterActions():
                 <tr><th>Subscriber Name</th><td>{subscriberName}</td></tr>
                 <tr><th>Endpoint</th><td>{endpoint}</td></tr>
                 <tr><th>Error Message</th><td><code style=\"font-size:12px;\">{errorMessage}</code></td></tr>
-                <tr><th>Publisher Project ID</th><td>{publisherProjectId}</td></tr>
-                <tr><th>Publisher Project Name</th><td>{publisherProjectName}</td></tr>
                 <tr><th>Stored Collection</th><td>DeadLetters</td></tr>
                 <tr><th>Replay Instructions</th><td>Use the dashboard action 'Retry' or the API endpoint for replay.</td></tr>
             </table>
@@ -105,8 +102,7 @@ class DeadLetterActions():
             subscriberName=subscriberName,
             endpoint=endpoint,
             errorMessage=errorMessage,
-            publisherProjectId=publisherProjectId,
-            publisherProjectName=publisherProjectName)
+            )
         res = db.create(deadLetterObject.model_dump(by_alias=True),
                         'DeadLetters')
 

@@ -79,8 +79,7 @@ class DeadLetter(BaseModel):
     lastTriedAt: datetime.datetime | None = Field(
         default=None, description="When it was last retried")
     publisherName : str = Field(None, description="Name of the publisher that sent the message")
-    publisherProjectId: str = Field(..., description="Project ID of the publisher")
-    publisherProjectName: str = Field(None, description="Name of the publisher project")
+    publisherProjectId: str = Field(None, description="Project ID of the publisher")
 
     @field_validator('createdAt', mode='before')
     def validate_datetime(cls, value: datetime.datetime) -> datetime.datetime:
@@ -95,13 +94,11 @@ class DeadLetter(BaseModel):
         self.publisherName = publisherName
         return self.publisherName
 
-    # @field_validator('endpoint', mode='before')
-    # def validate_url(cls, v: str) -> str:
-    #     try:
-    #         Url(v)  # validate only
-    #     except:
-    #         raise ValueError("Endpoint must be a valid URL")
-    #     return v
+    @model_validator(mode='after')
+    def setPublisherProjectId(self) -> str:
+        split = self.subscriberName.split('/')
+        self.publisherProjectId = split[1]
+        return self.publisherProjectId
 
     def retryMessage(self) -> None:
         self.retryCount += 1
