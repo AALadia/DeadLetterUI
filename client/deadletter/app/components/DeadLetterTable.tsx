@@ -22,7 +22,7 @@ export const DeadLetterTable = () => {
   const [deadLetters, setDeadLetters] = useState<DeadLetterRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAppContext();
+  const { user, showSnackbar } = useAppContext();
   const [openObjectViewer, setOpenObjectViewer] = useState<boolean>(false);
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
 
@@ -53,8 +53,8 @@ export const DeadLetterTable = () => {
     if (!dl) return;
 
     setDeadLetters(prev => prev.map(d => d._id === id ? { ...d, status: 'pending' } : d));
-    console.log(user)
     const res = await serverRequests.replayDeadLetter(id, user?._id || '');
+    showSnackbar(res,4000)
     if (res.status === 200) {
       const updated = res.data;
       setDeadLetters(prev => prev.map(d => d._id === id ? { ...d, ...updated } : d));
@@ -75,6 +75,7 @@ export const DeadLetterTable = () => {
             <th className="p-3">Topic</th>
             <th className="p-3">Subscriber</th>
             <th className="p-3">Message</th>
+            <th className="p-3">Error Message</th>
             <th className="p-3">Status</th>
             <th className="p-3">Retries</th>
             <th className="p-3">Actions</th>
@@ -96,6 +97,9 @@ export const DeadLetterTable = () => {
                 >
                   {JSON.stringify(item.originalMessage)}
                 </a>
+              </td>
+              <td className="p-3 max-w-xs">
+                <span className="text-red-600">{item.errorMessage}</span>
               </td>
               <td className="p-3">
                 <span className={`px-2 py-1 rounded text-white text-xs ${item.status === 'pending' ? 'bg-yellow-500' :

@@ -24,12 +24,12 @@ def createDeadLetter():
         errorMessage = data["message"]["data"].get('errorMessage')
         publisherProjectId = data["message"]["data"].get('publisherProjectId')
         publisherProjectName = data["message"]["data"].get('publisherProjectName')
-        topicName = data["message"]["attributes"]["topicName"]
+        topicName = data["message"]["attributes"].get("topicName")
         subscriberName = data["subscription"]
         endpoint = ""
         errorMessage = ""
-        publisherProjectId = data["message"]["attributes"]["publisherProjectId"]
-        publisherProjectName = data["message"]["attributes"]["publisherProjectName"]
+        publisherProjectId = data["message"]["attributes"].get("publisherProjectId")
+        publisherProjectName = data["message"]["attributes"].get("publisherProjectName")
         originalMessage = data["message"]["data"]
     try:
         res = PubSubRequests().createDeadLetter(_id, originalMessage, topicName, subscriberName, endpoint, errorMessage, publisherProjectId, publisherProjectName)

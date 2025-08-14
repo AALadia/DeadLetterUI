@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "./contexts/AppContext";
+import  Snackbar  from "./components/Snackbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,9 @@ export default function RootLayout({
         <AppProvider firebaseApiKey={firebaseApiKey}>
           {/* The AppProvider wraps the children to provide context */}
           {children}
+          <Snackbar message="Hello, World!" open={true} />
         </AppProvider>
+
       </body>
     </html>
   );

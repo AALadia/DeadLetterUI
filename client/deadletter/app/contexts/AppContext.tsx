@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { createContext, useState, useContext, ReactNode, useEffect, use } from 'react';
 import { User } from '../schemas/UserSchema';
 import { useRouter } from 'next/navigation';
 import { initializeApp } from "firebase/app";
@@ -8,13 +8,26 @@ import getFirebaseKey from '../_utils/getFirebaseKey';
 import { getAuth,onAuthStateChanged } from 'firebase/auth';
 import serverRequests from '../_lib/serverRequests';
 
+
 type AppContextType = {
   user: User | null;
   setUser: (user: User | null) => void;
   firebaseAuth: ReturnType<typeof getAuth>;
   router: ReturnType<typeof useRouter>;
   isAuthLoading: boolean;
+  showSnackbar: (message: string, duration?: number) => void;
+  openSnackBar: boolean;
+  setOpenSnackbar: (open: boolean) => void;
+  snackbarMessage: string | null;
+  setSnackbarMessage: (message: string | null) => void;
+  snackbarType: 'success' | 'error';
 };
+
+type ServerResponseType = {
+  status: number;
+  message: string;
+  data?: any;
+}
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -48,7 +61,17 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
     return () => unsubscribe()
     }, [firebaseAuth]);
 
-  
+  // SNACKBAR
+  const [openSnackBar,setOpenSnackbar] = useState(false)
+  const [snackbarMessage,setSnackbarMessage] = useState<string | null>(null)
+  const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
+
+  const showSnackbar = (serverResponse: ServerResponseType, duration: number = 4000) => {
+    console.log(serverResponse.message)
+    setOpenSnackbar(true)
+    setSnackbarType(serverResponse.status === 200 ? 'success' : 'error')
+    setSnackbarMessage(serverResponse.message)
+  }
   
 
   // STATES
@@ -65,6 +88,12 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
     user,
     setUser,
     isAuthLoading,
+    showSnackbar,
+    openSnackBar,
+    setOpenSnackbar,
+    snackbarMessage,
+    setSnackbarMessage,
+    snackbarType,
   };
 
   return (

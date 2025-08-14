@@ -40,12 +40,13 @@ class AllRoles(BaseModel):
             description="can replay dead letter",
             collectionsTransacted=["DeadLetters"],
             unauthorizedMessage="You are not authorized to replay dead letters"),
-            Role(
-            _id="canCloseDeadLetter",
+        Role(
+            _id="canReceiveNewDeadLetterEmails",
             value=False,
-            description="can close a deaad letter",
+            description="can receive newly created dead letter emails",
             collectionsTransacted=["DeadLetters"],
-            unauthorizedMessage="You are not authorized to close dead letters")
+            unauthorizedMessage="You are not authorized to receive newly created dead letter emails"
+        )
     ], )
 
     def getAllRoles(self) -> List[Role]:

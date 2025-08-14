@@ -22,7 +22,7 @@ def test_deadLetter():
     PubSubRequests().createDeadLetter('testTopic', {'test': 'value'},
                                    'testTopicName', 'testSubscriber',
                                    'http://127.0.0.1:5000/mockPost',
-                                   'Test error message')
+                                   'Test error message','1234','54321')
     deadLetters = db.read({'_id': 'testTopic'}, 'DeadLetters', findOne=True)
     res = ApiRequests().replayDeadLetter(deadLetterId='testTopic',
                                          userId=user['_id'])
