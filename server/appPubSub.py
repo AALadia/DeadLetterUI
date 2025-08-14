@@ -21,6 +21,8 @@ def createDeadLetter():
         subscriberName = data["message"]["data"].get('subscriberName')
         endpoint = data["message"]["data"].get('endpoint')
         errorMessage = data["message"]["data"].get('errorMessage')
+        publisherProjectId = data["message"]["data"].get('publisherProjectId')
+        publisherProjectName = data["message"]["data"].get('publisherProjectName')
         topicName = data["message"]["attributes"]["topicName"]
         subscriberName = data["subscription"]
         endpoint = ""
@@ -29,7 +31,7 @@ def createDeadLetter():
         publisherProjectName = data["message"]["attributes"]["publisherProjectName"]
         originalMessage = data["message"]["data"]
     try:
-        res = PubSubRequests().createDeadLetter(_id, originalMessage, topicName, subscriberName, endpoint, errorMessage)
+        res = PubSubRequests().createDeadLetter(_id, originalMessage, topicName, subscriberName, endpoint, errorMessage, publisherProjectId, publisherProjectName)
     except Exception as e:
         traceback.print_exc()
         return jsonify({'message': str(e),'data':None,'status':400}), 400
