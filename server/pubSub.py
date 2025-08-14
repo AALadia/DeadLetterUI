@@ -23,11 +23,9 @@ def _get_caller_name() -> str:
     # [1] is Pydantic internals, so [2] is your caller.
     return inspect.stack()[3].function
 
-
 def _getIndex():
     data = pubSubMockDb.read({}, AppConfig().projectName)
     return len(data)
-
 
 class Singleton:
     _instance = None
@@ -117,6 +115,7 @@ class PubSub():
         self.appConfig = AppConfig()
         self.projectId = self.appConfig.getProjectId()
         self.publisher = None
+        self.subscriber = None
         self.isProductionEnvironment = self.appConfig.getIsProductionEnvironment(
         )
         self.test = test
@@ -136,6 +135,8 @@ class PubSub():
                     # Create the publisher client with test credentials
                     self.publisher = pubsub_v1.PublisherClient(
                         credentials=credentials)
+                    self.subscriber = pubsub_v1.SubscriberClient(
+                        credentials=credentials)
                 except Exception as e:
                     # Handle the case where loading credentials fails
                     print(f"Error loading service account credentials: {e}")
@@ -143,6 +144,7 @@ class PubSub():
             else:
                 # Use default credentials in production (handled by Cloud Run's service account)
                 self.publisher = pubsub_v1.PublisherClient()
+                self.subscriber = pubsub_v1.SubscriberClient()
 
     def _checkIfTopicExists(self, topicName):
         topicPath = self.publisher.topic_path(self.projectId, topicName)
@@ -181,6 +183,7 @@ class PubSub():
             attrs = {
                 'publisherProjectId': self.projectId,
                 'publisherProjectName': self.appConfig.projectName,
+                'topicName': topicName,
             }
 
             topicPath = self.publisher.topic_path(self.projectId, topicName)
@@ -297,7 +300,6 @@ def pubSubDecorator(projectNameConsumers: list[AbstractService]):
 
     return decorator
 
-
 class PubsubMessage(BaseModel):
     """
     Wire-format Pub/Sub message.
@@ -366,7 +368,6 @@ class MockDataConsumer(Singleton):
         self.previousIndexConsumed += 1
 
         return {'res': res, 'message': data}
-
 
 
 if __name__ == '__main__':

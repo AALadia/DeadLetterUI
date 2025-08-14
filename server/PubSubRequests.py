@@ -8,7 +8,8 @@ class DeadLetterActions():
                   successMessage='Dead letter message created successfully')
     def createDeadLetter(self, _id: str, originalMessage: dict, topicName: str,
                          subscriberName: str, endpoint: str,
-                         errorMessage: str) -> dict:
+                         errorMessage: str, publisherProjectId: str,
+                         publisherProjectName: str) -> dict:
 
         # idempotency check
         if db.read({'_id': _id}, 'DeadLetters', findOne=True):
@@ -20,7 +21,10 @@ class DeadLetterActions():
             topicName=topicName,
             subscriberName=subscriberName,
             endpoint=endpoint,
-            errorMessage=errorMessage)
+            errorMessage=errorMessage,
+            publisherProjectId=publisherProjectId,
+            publisherProjectName=publisherProjectName
+        )
         res = db.create(deadLetterObject.model_dump(by_alias=True),
                         'DeadLetters')
         return res

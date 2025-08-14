@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator,model_validator
 from typing import Any, Optional, Literal
 from roles import UserRoles, RoleSetter, AllRoles
 import datetime
@@ -78,12 +78,22 @@ class DeadLetter(BaseModel):
         description="When the dead letter was created")
     lastTriedAt: datetime.datetime | None = Field(
         default=None, description="When it was last retried")
+    publisherName : str = Field(None, description="Name of the publisher that sent the message")
+    publisherProjectId: str = Field(..., description="Project ID of the publisher")
+    publisherProjectName: str = Field(None, description="Name of the publisher project")
 
     @field_validator('createdAt', mode='before')
     def validate_datetime(cls, value: datetime.datetime) -> datetime.datetime:
         if value.tzinfo is None:
             raise ValueError("Datetime must be timezone-aware")
         return value.astimezone(datetime.timezone.utc)
+
+    @model_validator(mode='after')
+    def setPublisherName(self) -> str:
+        split = self.subscriberName.split('/')
+        publisherName = split[0] + '/' + split[1] + '/topics/' + self.topicName
+        self.publisherName = publisherName
+        return self.publisherName
 
     # @field_validator('endpoint', mode='before')
     # def validate_url(cls, v: str) -> str:

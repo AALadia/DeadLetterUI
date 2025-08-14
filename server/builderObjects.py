@@ -13,7 +13,9 @@ def createDeadLetterObject(
         errorMessage: str = 'Test error message',
         status: str = 'failed',
         createdAt: datetime.datetime = datetime.datetime.now(tz=datetime.timezone.utc),
-        lastTriedAt: datetime.datetime | None = None) -> DeadLetter:
+        lastTriedAt: datetime.datetime | None = None,
+        publisherProjectId: str = 'testProjectId',
+        publisherProjectName: str = 'testPublisherProjectName') -> DeadLetter:
 
     if id == 'random':
         id = generateRandomString()
@@ -26,7 +28,9 @@ def createDeadLetterObject(
                       errorMessage=errorMessage,
                       status=status,
                       createdAt=createdAt,
-                      lastTriedAt=lastTriedAt)
+                      lastTriedAt=lastTriedAt,
+                      publisherProjectId=publisherProjectId,
+                      publisherProjectName=publisherProjectName)
 
 def createUserObject(_id: str = None,
                      role: str = 'superAdmin',
