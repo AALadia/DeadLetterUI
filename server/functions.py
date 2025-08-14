@@ -43,7 +43,7 @@ def retryMessage(deadLetter: DeadLetter):
                 'publisherProjectName': deadLetter.publisherProjectName,
                 'topicName': deadLetter.topicName,
             }
-    res = publisher.publish(deadLetter.publisherName,json.dumps(deadLetter.originalMessage).encode("utf-8"))
+    res = publisher.publish(deadLetter.publisherName,json.dumps(deadLetter.originalMessage).encode("utf-8"), **attrs)
     result = res.result()
     deadLetter.retryMessage()
     if not result.received_messages:
