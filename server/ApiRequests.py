@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Literal
 import datetime
 from mongoDb import db
 from route_config import route_config
@@ -7,7 +7,6 @@ from objects import User, DeadLetter
 from builderObjects import createDeadLetterObject
 from functions import retryMessage
 from AppConfig import AppConfig
-
 
 
 class AuthActions():
@@ -92,16 +91,23 @@ class UserActions():
 
 
 class DeadLetterActions():
+
     @route_config(httpMethod='POST',
                   jwtRequired=True,
-                  successMessage='Dead letter message updated successfully',
+                  successMessage='Dead letter message replayed successfully',
                   roleAccess='canReplayDeadLetter')
-    def replayDeadLetter(self, deadLetterId: str, userId: str) -> dict:
+    def replayDeadLetter(self, deadLetterId: str, localOrProd: Literal['local',
+                                                                       'prod'],
+                         userId: str) -> dict:
+        # Optional runtime guard (useful because Literal is not enforced at runtime)
+        if localOrProd not in ('local', 'prod'):
+            raise ValueError("localOrProd must be either 'local' or 'prod'")
+
         deadLetter = db.read({'_id': deadLetterId},
                              'DeadLetters',
                              findOne=True)
         deadLetter = DeadLetter(**deadLetter)
-        deadLetter = retryMessage(deadLetter)
+        deadLetter = retryMessage(deadLetter,localOrProd)
         deadLetter = db.update(
             {
                 '_id': deadLetter.id,
@@ -110,31 +116,34 @@ class DeadLetterActions():
         return deadLetter
 
     @route_config(httpMethod='POST',
-                jwtRequired=True,
-                successMessage='Dead letters fetched successfully',
-                roleAccess='canCloseDeadLetter')
-    def closeDeadLetter(self,deadLetterId: str, userId: str) -> List[DeadLetter]:
+                  jwtRequired=True,
+                  successMessage='Dead letters fetched successfully',
+                  roleAccess='canCloseDeadLetter')
+    def closeDeadLetter(self, deadLetterId: str,
+                        userId: str) -> List[DeadLetter]:
         """Close the message and mark it as success."""
-        
-        deadLetter = db.read({'_id':deadLetterId}, 'DeadLetters', findOne=True)
+
+        deadLetter = db.read({'_id': deadLetterId},
+                             'DeadLetters',
+                             findOne=True)
         deadLetter = DeadLetter(**deadLetter)
         deadLetter.markAsSuccess()
-        db.update(
-            {
-                '_id': deadLetter.id,
-                '_version': deadLetter.version
-            }, deadLetter.model_dump(by_alias=True), 'DeadLetters')
+        db.update({
+            '_id': deadLetter.id,
+            '_version': deadLetter.version
+        }, deadLetter.model_dump(by_alias=True), 'DeadLetters')
         return deadLetter
 
     @route_config(httpMethod='POST',
                   jwtRequired=True,
                   successMessage='Dead letters fetched successfully')
     def listDeadLetters(self,
-                        
                         projection: dict | None = None) -> List[DeadLetter]:
         """Fetch a list of dead letters with optional filter and projection."""
-        
-        deadLetters = db.read({'status':'failed'}, 'DeadLetters', projection=projection)
+
+        deadLetters = db.read({'status': 'failed'},
+                              'DeadLetters',
+                              projection=projection)
         return deadLetters
 
 

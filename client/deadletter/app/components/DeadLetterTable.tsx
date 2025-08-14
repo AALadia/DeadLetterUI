@@ -48,12 +48,12 @@ export const DeadLetterTable = () => {
   }, [user]);
 
 
-  const handleRetry = async (id: string, target: 'production' | 'localhost') => {
+  const handleRetry = async (id: string, target: 'prod' | 'local') => {
     const dl = deadLetters.find(d => d._id === id);
     if (!dl) return;
 
     setDeadLetters(prev => prev.map(d => d._id === id ? { ...d, status: 'pending' } : d));
-    const res = await serverRequests.replayDeadLetter(id, user?._id || '');
+    const res = await serverRequests.replayDeadLetter(id,target, user?._id || '');
     showSnackbar(res,4000)
     if (res.status === 200) {
       const updated = res.data;
@@ -114,7 +114,7 @@ export const DeadLetterTable = () => {
                 <div className="flex gap-1 flex-wrap">
                   <button
                     className="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
-                    onClick={() => handleRetry(item._id, 'production')}
+                    onClick={() => handleRetry(item._id, 'prod')}
                     disabled={item.status === 'success'}
                     title="Retry against production endpoint"
                   >
@@ -122,7 +122,7 @@ export const DeadLetterTable = () => {
                   </button>
                   <button
                     className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                    onClick={() => handleRetry(item._id, 'localhost')}
+                    onClick={() => handleRetry(item._id, 'local')}
                     disabled={item.status === 'success'}
                     title="Retry against localhost (debug)"
                   >

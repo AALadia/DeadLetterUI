@@ -9,6 +9,7 @@ from google.oauth2 import service_account
 import json
 from google.cloud import pubsub_v1
 from mongoDb import db
+from typing import Literal
 
 cwd = os.path.dirname(os.path.abspath(__file__))
 key_path = os.path.join(cwd, "keys", "starpack-b149d-ea86f6d0c9ec.json")
@@ -19,11 +20,10 @@ try:
     subscriber = pubsub_v1.SubscriberClient(credentials=credentials)
     publisher = pubsub_v1.PublisherClient(credentials=credentials)
 except Exception as e:
-    subscriber = pubsub_v1.SubscriberClient()
     publisher = pubsub_v1.PublisherClient()
 
 
-def retryMessage(deadLetter: DeadLetter):
+def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod']):
     deadLetter.retryMessage()
     subscriptionName = deadLetter.subscriberName.split('/')[-1]
     subscription_path = subscriber.subscription_path(
@@ -54,7 +54,9 @@ def retryMessage(deadLetter: DeadLetter):
             "subscription": deadLetter.subscriberName
         }
         res = serverRequest.post(last_segment, payload=payload)
-        deadLetter.markAsSuccess()
+
+        if localOrProd == 'prod':
+            deadLetter.markAsSuccess()
 
     except Exception as e:
         deadLetter.markAsFailed(str(e))

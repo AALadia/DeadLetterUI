@@ -81,10 +81,11 @@ def replayDeadLetter():
     if request.is_json:
         data = request.get_json()
         deadLetterId = data.get('deadLetterId')
+        localOrProd = data.get('localOrProd')
         userId = data.get('userId')
         current_user = get_jwt_identity()
     try:
-        res = ApiRequests().replayDeadLetter(deadLetterId, userId)
+        res = ApiRequests().replayDeadLetter(deadLetterId, localOrProd, userId)
     except Exception as e:
         traceback.print_exc()
         return jsonify({'message': str(e),'data':None,'status':400}), 400
