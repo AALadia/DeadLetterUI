@@ -1,3 +1,4 @@
+import base64
 from objects import DeadLetter, User
 import datetime
 from ServerRequest import ServerRequest
@@ -38,34 +39,33 @@ except Exception as e:
     publisher = pubsub_v1.PublisherClient()
 
 def retryMessage(deadLetter: DeadLetter):
-    attrs = {
-                'publisherProjectId': deadLetter.publisherProjectId,
-                'publisherProjectName': deadLetter.publisherProjectName,
-                'topicName': deadLetter.topicName,
-            }
-    res = publisher.publish(deadLetter.publisherName,json.dumps(deadLetter.originalMessage).encode("utf-8"), **attrs)
-    result = res.result()
-    deadLetter.retryMessage()
-    if not result.received_messages:
-        return "No DLQ messages."
+    subscriptionName = deadLetter.subscriberName.split('/')[-1]
+    subscription_path = subscriber.subscription_path(deadLetter.publisherProjectId, subscriptionName)
+    subscription = subscriber.get_subscription(subscription=subscription_path)
+    base_url, last_segment = split_url_and_last_segment(subscription.push_config.push_endpoint)
+    serverRequest = ServerRequest(serverBaseUrl=base_url,
+                                  headers={"Content-Type": "application/json"})
+    try:
+        # convert to utf8 original message
+        original_json = json.dumps(deadLetter.originalMessage, ensure_ascii=False, separators=(",", ":"))
+        # Encode to UTF-8, then Base64, then ASCII string
+        data_b64 = base64.b64encode(original_json.encode("utf-8")).decode("ascii")
 
-    rm = result.received_messages[0]
-    msg = rm.message
+        payload = {"message": {"data": data_b64}}
+        res = serverRequest.post(last_segment, payload={'message': {"data": payload}})
+        deadLetter.markAsSuccess()
 
-    # Optionally strip Pub/Sub system attrs before republishing
-    attrs = {
-        k: v
-        for k, v in msg.attributes.items()
-        if not k.startswith("x-goog-pubsub-")
-    }
+    except Exception as e:
+        deadLetter.markAsFailed(str(e))
 
-    # Re-publish the original payload
-    future = publisher.publish(ORIGINAL_TOPIC, msg.data, **attrs)
-    future.result()  # wait for publish OK
+    return deadLetter
+    # attrs = {
+    #             'publisherProjectId': deadLetter.publisherProjectId,
+    #             'publisherProjectName': deadLetter.publisherProjectName,
+    #             'topicName': deadLetter.topicName,
+    #         }
+    # res = publisher.publish(deadLetter.publisherName,json.dumps(deadLetter.originalMessage).encode("utf-8"), **attrs)
+    # result = res.result()
+    # deadLetter.retryMessage()
 
-    # Ack the DLQ message only after successful publish
-    subscriber.acknowledge(request={
-        "subscription": deadLetter.publisherName,
-        "ack_ids": [rm.ack_id]
-    })
-    return f"Republished {msg.message_id} to {ORIGINAL_TOPIC}"
+    # return deadLetter

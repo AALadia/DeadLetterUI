@@ -14,5 +14,5 @@ class ServerRequest:
             response.raise_for_status(
             )  # Raises an HTTPError for bad responses
             return response.json()
-        except requests.exceptions.RequestException as e:
-            raise ConnectionError(f"Error connecting to sticker printer")
+        except Exception as e:
+            raise ValueError(str(e))

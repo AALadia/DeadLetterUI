@@ -14,7 +14,8 @@ logging.basicConfig(level=logging.INFO)
 def createDeadLetter():
     if request.is_json:
         data = request.get_json()
-        data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])
+        if isinstance(data["message"]["data"],str):
+             data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])
         _id = data["message"]["data"].get('_id')
         originalMessage = data["message"]["data"].get('originalMessage')
         topicName = data["message"]["data"].get('topicName')

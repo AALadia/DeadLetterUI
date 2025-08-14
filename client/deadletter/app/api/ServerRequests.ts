@@ -89,6 +89,26 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         }
     }
 
+    async closeDeadLetter(deadLetterId: string, userId: string): Promise<any> {
+        try {
+        const res = await fetch(`${this.apiUrl}/closeDeadLetter`, {
+            method: 'POST',
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify({"deadLetterId": deadLetterId, "userId": userId}),
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        
+        return data;
+        } catch (error) {
+            console.error("Error:", error);
+            return {"message": "Failed to fetch data", "error": error};
+        }
+    }
+
     async listDeadLetters(projection: Record<string, any> | null): Promise<any> {
         try {
         const res = await fetch(`${this.apiUrl}/listDeadLetters`, {

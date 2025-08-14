@@ -110,6 +110,23 @@ class DeadLetterActions():
         return deadLetter
 
     @route_config(httpMethod='POST',
+                jwtRequired=True,
+                successMessage='Dead letters fetched successfully',
+                roleAccess='canCloseDeadLetter')
+    def closeDeadLetter(self,deadLetterId: str, userId: str) -> List[DeadLetter]:
+        """Close the message and mark it as success."""
+        
+        deadLetter = db.read({'_id':deadLetterId}, 'DeadLetters', findOne=True)
+        deadLetter = DeadLetter(**deadLetter)
+        deadLetter.markAsSuccess()
+        db.update(
+            {
+                '_id': deadLetter.id,
+                '_version': deadLetter.version
+            }, deadLetter.model_dump(by_alias=True), 'DeadLetters')
+        return deadLetter
+
+    @route_config(httpMethod='POST',
                   jwtRequired=True,
                   successMessage='Dead letters fetched successfully')
     def listDeadLetters(self,

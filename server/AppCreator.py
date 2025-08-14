@@ -275,7 +275,7 @@ if __name__ == '__main__':
         
         parameters_check = '    if request.is_json:\n        data = request.get_json()\n' if method == 'POST' else ''
         parameters_code = params.as_assignment_block(indent=8, kind=kind)
-        decode_message = '        data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])\n' if kind == 'appPubSub' else ''
+        decode_message = '        if isinstance(data["message"]["data"],str):\n             data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])\n' if kind == 'appPubSub' else ''
         pubSubAttributes = '        topicName = data["message"]["attributes"]["topicName"]\n        subscriberName = data["subscription"]\n        endpoint = ""\n        errorMessage = ""\n        publisherProjectId = data["message"]["attributes"]["publisherProjectId"]\n        publisherProjectName = data["message"]["attributes"]["publisherProjectName"]\n        originalMessage = data["message"]["data"]\n' if kind == 'appPubSub' else ''
 
         jwt_decorator = '@jwt_required()' if meta['jwtRequired'] else ''

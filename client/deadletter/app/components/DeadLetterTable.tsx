@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import serverRequests from '../_lib/serverRequests';
 import { useAppContext } from '../contexts/AppContext';
+import { ObjectViewerModal } from "./ObjectViewerModal";
 
 interface DeadLetterRow {
   _id: string;
@@ -22,11 +23,14 @@ export const DeadLetterTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAppContext();
+  const [openObjectViewer, setOpenObjectViewer] = useState<boolean>(false);
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
 
   const loadDeadLetters = async () => {
     setLoading(true);
     setError(null);
     const res = await serverRequests.listDeadLetters(null);
+    console.log(res)
     if (res.status !== 200) {
       const msg = res.message || 'Failed to load dead letters';
       setError(`${msg}${res.status === 401 ? ' (unauthorized - please re-login)' : ''}`);
@@ -42,6 +46,7 @@ export const DeadLetterTable = () => {
       loadDeadLetters();
     }
   }, [user]);
+
 
   const handleRetry = async (id: string, target: 'production' | 'localhost') => {
     const dl = deadLetters.find(d => d._id === id);
@@ -69,8 +74,7 @@ export const DeadLetterTable = () => {
           <tr className="bg-gray-200 text-left text-sm font-medium">
             <th className="p-3">Topic</th>
             <th className="p-3">Subscriber</th>
-            <th className="p-3">Endpoint</th>
-            <th className="p-3">Error</th>
+            <th className="p-3">Message</th>
             <th className="p-3">Status</th>
             <th className="p-3">Retries</th>
             <th className="p-3">Actions</th>
@@ -81,14 +85,23 @@ export const DeadLetterTable = () => {
             <tr key={item._id} className="border-t hover:bg-gray-50 text-sm">
               <td className="p-3 font-mono text-xs">{item.topicName}</td>
               <td className="p-3">{item.subscriberName}</td>
-              <td className="p-3 text-blue-600 truncate max-w-xs" title={item.endpoint}>{item.endpoint}</td>
-              <td className="p-3 truncate max-w-xs" title={item.errorMessage}>{item.errorMessage || '-'}</td>
+              <td className="p-3 max-w-xs">
+                <a
+                  onClick={() => {
+                    setOpenObjectViewer(true);
+                    setSelectedMessage(item.originalMessage);
+                  }}
+                  className="text-blue-600 truncate block overflow-hidden whitespace-nowrap hover:underline"
+                  title={JSON.stringify(item.originalMessage)} // tooltip with full text
+                >
+                  {JSON.stringify(item.originalMessage)}
+                </a>
+              </td>
               <td className="p-3">
-                <span className={`px-2 py-1 rounded text-white text-xs ${
-                  item.status === 'pending' ? 'bg-yellow-500' :
-                  item.status === 'success' ? 'bg-green-500' :
-                  'bg-red-500'
-                }`}>
+                <span className={`px-2 py-1 rounded text-white text-xs ${item.status === 'pending' ? 'bg-yellow-500' :
+                    item.status === 'success' ? 'bg-green-500' :
+                      'bg-red-500'
+                  }`}>
                   {item.status}
                 </span>
               </td>
@@ -122,6 +135,11 @@ export const DeadLetterTable = () => {
           )}
         </tbody>
       </table>
+      <ObjectViewerModal
+        open={openObjectViewer}
+        onClose={() => setOpenObjectViewer(false)}
+        data={selectedMessage}
+      />
     </div>
   );
 };
