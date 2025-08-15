@@ -12,7 +12,7 @@ class DeadLetterActions():
                   jwtRequired=False,
                   successMessage='Dead letter message created successfully')
     def createDeadLetter(self, _id: str, originalMessage: dict,
-                         subscription: str
+                         subscription: str,originalTopicPath:str
                          ) -> dict:
 
         # idempotency check
@@ -23,6 +23,7 @@ class DeadLetterActions():
             id=_id,
             originalMessage=originalMessage,
             subscription=subscription,
+            originalTopicPath= originalTopicPath
             )
 
         # Prepare & send an email (single API call with all recipients)

@@ -4,7 +4,7 @@ from roles import UserRoles, RoleSetter, AllRoles
 import datetime
 from utils import updateData
 from pydantic_core import Url
-from pubSubPublisherAndSubscriber import subscriber
+from pubSubPublisherAndSubscriber import subscriber, publisher
 
 
 class User(BaseModel):
@@ -75,9 +75,10 @@ class DeadLetter(BaseModel):
     lastTriedAt: datetime.datetime | None = Field(
         default=None, description="When it was last retried")
     publisherProjectId: str = Field(None, description="Project ID of the publisher")
-    endPoint: str | None = Field(None, description="Endpoint URL for the subscription")
+    endPoints: list[str] = Field(None, description="string Endpoint URL for the subscription")
     topic : str = Field(None, description="Topic name for the subscription")
     errorMessage: str | None = Field(None, description="Error message if retry failed")
+    originalTopicPath: str | None = Field(None, description="Original topic path for the subscription")
 
     @field_validator('createdAt', mode='before')
     def validate_datetime(cls, value: datetime.datetime) -> datetime.datetime:
@@ -89,12 +90,15 @@ class DeadLetter(BaseModel):
 
     @model_validator(mode='after')
     def setPublisherProjectId(self) -> str:
-        split = self.subscription.split('/')
+        split = self.originalTopicPath.split('/')
         self.publisherProjectId = split[1]
-        subscription = subscriber.get_subscription(subscription=self.subscription)
-        self.endPoint = subscription.push_config.push_endpoint
-        self.topic = subscription.topic
-
+        subscriptions = publisher.list_topic_subscriptions(request={"topic": self.originalTopicPath})
+        endPoints = []
+        for subscription in subscriptions:
+            subscription = subscriber.get_subscription(subscription=subscription)
+            endPoints.append(subscription.push_config.push_endpoint)
+        self.topic = self.originalTopicPath
+        self.endPoints = endPoints
         return self
 
     def retryMessage(self) -> None:
