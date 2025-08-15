@@ -73,7 +73,6 @@ class DeadLetterActions():
             <table class=\"meta-table\" role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">
                 <tr><th>ID</th><td>{_id}</td></tr>
                 <tr><th>Subscriber Name</th><td>{subscription}</td></tr>
-                <tr><th>Endpoint</th><td>{endpoint}</td></tr>
                 <tr><th>Stored Collection</th><td>DeadLetters</td></tr>
                 <tr><th>Replay Instructions</th><td>Use the dashboard action 'Retry' or the API endpoint for replay.</td></tr>
             </table>
