@@ -13,7 +13,7 @@ import typing
 import importlib.util  # added
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Union, get_args, get_origin
+from typing import Any, Callable, Dict, List, Union, get_args, get_origin, Literal
 import datetime
 
 from ApiRequests import ApiRequests
@@ -73,6 +73,25 @@ def py_annotation_to_ts(ann: Any) -> str:
     origin = get_origin(ann)
     args = get_args(ann) or ()
 
+    # Literal[...] support -> union of literal values in TS
+    if origin is typing.Literal:
+        lit_parts: List[str] = []
+        for a in args:
+            if isinstance(a, str):
+                lit_parts.append(f"'{a}'")
+            elif isinstance(
+                    a,
+                    bool):  # booleans before int since bool is subclass of int
+                lit_parts.append('true' if a else 'false')
+            elif isinstance(a, (int, float)):
+                lit_parts.append(str(a))
+            else:  # fallback for unsupported literal types
+                lit_parts.append('any')
+        # Deduplicate while preserving order
+        seen = set()
+        deduped = [p for p in lit_parts if not (p in seen or seen.add(p))]
+        return " | ".join(deduped) if deduped else 'never'
+
     # List / list
     if origin in (list, typing.List):
         return f"{py_annotation_to_ts(args[0]) if args else 'any'}[]"
@@ -91,9 +110,28 @@ def py_annotation_to_ts(ann: Any) -> str:
             return f"{py_annotation_to_ts(args[0])}[]"
         return f"[{', '.join(py_annotation_to_ts(a) for a in args)}]"
 
-    # Union / Optional
+    # Union / Optional (flatten nested unions, dedupe)
     if origin in (typing.Union, types.UnionType):  # PEP 604 | support
-        return " | ".join(py_annotation_to_ts(a) for a in args)
+        flat: List[Any] = []
+
+        def _flatten(a: Any):
+            o = get_origin(a)
+            if o in (typing.Union, types.UnionType):
+                for sub in get_args(a):
+                    _flatten(sub)
+            else:
+                flat.append(a)
+
+        for a in args:
+            _flatten(a)
+        rendered: List[str] = []
+        seen: set[str] = set()
+        for a in flat:
+            ts = py_annotation_to_ts(a)
+            if ts not in seen:
+                seen.add(ts)
+                rendered.append(ts)
+        return " | ".join(rendered) if rendered else 'any'
 
     # Forward ref as string
     if isinstance(ann, str):

@@ -69,7 +69,7 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         }
     }
 
-    async replayDeadLetter(deadLetterId: string, localOrProd: Literal, userId: string): Promise<any> {
+    async replayDeadLetter(deadLetterId: string, localOrProd: 'local' | 'prod', userId: string): Promise<any> {
         try {
         const res = await fetch(`${this.apiUrl}/replayDeadLetter`, {
             method: 'POST',

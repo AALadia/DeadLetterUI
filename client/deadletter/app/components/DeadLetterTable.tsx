@@ -89,7 +89,7 @@ export const DeadLetterTable = () => {
                 </a>
               </td>
               <td className="p-3 max-w-xs">
-                <span className="text-red-600">{item}</span>
+                <span className="text-red-600">{item.errorMessage}</span>
               </td>
               <td className="p-3">
                 <span className={`px-2 py-1 rounded text-white text-xs ${item.status === 'pending' ? 'bg-yellow-500' :
