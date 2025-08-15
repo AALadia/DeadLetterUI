@@ -15,17 +15,9 @@ export type Version = number;
  */
 export type Topicname = string;
 /**
- * Name of the subscriber or service that failed
+ * subscription string of the service that failed
  */
-export type Subscribername = string;
-/**
- * The endpoint that failed to process the message
- */
-export type Endpoint = string;
-/**
- * Error that caused the failure
- */
-export type Errormessage = string;
+export type Subscription = string;
 /**
  * Number of retry attempts made
  */
@@ -51,10 +43,8 @@ export interface DeadLetter {
   _id: Id;
   _version?: Version;
   originalMessage: Originalmessage;
-  topicName: Topicname;
-  subscriberName: Subscribername;
-  endpoint: Endpoint;
-  errorMessage: Errormessage;
+  topicName?: Topicname;
+  subscription: Subscription;
   retryCount?: Retrycount;
   status?: Status;
   createdAt?: Createdat;

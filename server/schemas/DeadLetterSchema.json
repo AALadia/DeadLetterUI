@@ -17,23 +17,14 @@
             "type": "object"
         },
         "topicName": {
+            "default": null,
             "description": "Name of the topic the message was received from",
             "title": "Topicname",
             "type": "string"
         },
-        "subscriberName": {
-            "description": "Name of the subscriber or service that failed",
-            "title": "Subscribername",
-            "type": "string"
-        },
-        "endpoint": {
-            "description": "The endpoint that failed to process the message",
-            "title": "Endpoint",
-            "type": "string"
-        },
-        "errorMessage": {
-            "description": "Error that caused the failure",
-            "title": "Errormessage",
+        "subscription": {
+            "description": "subscription string of the service that failed",
+            "title": "Subscription",
             "type": "string"
         },
         "retryCount": {
@@ -83,10 +74,7 @@
     "required": [
         "_id",
         "originalMessage",
-        "topicName",
-        "subscriberName",
-        "endpoint",
-        "errorMessage"
+        "subscription"
     ],
     "title": "DeadLetter",
     "type": "object",
