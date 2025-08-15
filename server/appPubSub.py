@@ -19,11 +19,12 @@ def createDeadLetter():
         _id = data["message"]["data"].get('_id')
         originalMessage = data["message"]["data"].get('originalMessage')
         subscription = data["message"]["data"].get('subscription')
+        originalTopicPath = data["message"]["data"].get('originalTopicPath')
         subscription = data["subscription"]
         originalTopicPath = data["message"]["attributes"].get("originalTopicPath")
         originalMessage = data["message"]["data"]
     try:
-        res = PubSubRequests().createDeadLetter(_id, originalMessage, subscription)
+        res = PubSubRequests().createDeadLetter(_id, originalMessage, subscription, originalTopicPath)
     except Exception as e:
         traceback.print_exc()
         return jsonify({'message': str(e),'data':None,'status':400}), 400
