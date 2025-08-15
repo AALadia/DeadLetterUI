@@ -5,23 +5,27 @@ from roles import AllRoles
 
 
 def createDeadLetterObject(
-        id: str = 'random',
-        originalMessage: dict = {'test': 'value'},
-        subscription: str = 'testSubscriber',
-        status: str = 'failed',
-        createdAt: datetime.datetime = datetime.datetime.now(tz=datetime.timezone.utc),
-        lastTriedAt: datetime.datetime | None = None,
-        ) -> DeadLetter:
+    id: str = 'random',
+    originalMessage: dict = {'test': 'value'},
+    subscription: str = "projects/starpack-b149d/subscriptions/deadLetterPush",
+    status: str = 'failed',
+    createdAt: datetime.datetime = datetime.datetime.now(
+        tz=datetime.timezone.utc),
+    lastTriedAt: datetime.datetime | None = None,
+) -> DeadLetter:
 
     if id == 'random':
         id = generateRandomString()
 
-    return DeadLetter(_id=id,
-                      originalMessage=originalMessage,
-                      subscription=subscription,
-                      status=status,
-                      createdAt=createdAt,
-                      lastTriedAt=lastTriedAt,)
+    return DeadLetter(
+        _id=id,
+        originalMessage=originalMessage,
+        subscription=subscription,
+        status=status,
+        createdAt=createdAt,
+        lastTriedAt=lastTriedAt,
+    )
+
 
 def createUserObject(_id: str = None,
                      role: str = 'superAdmin',
@@ -37,3 +41,7 @@ def createUserObject(_id: str = None,
                 type=role,
                 roles=AllRoles().getAllRoles(),
                 _version=0).setRole(role)
+
+
+if __name__ == "__main__":
+    obj = createDeadLetterObject()

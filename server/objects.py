@@ -1,9 +1,10 @@
-from pydantic import BaseModel, Field, field_validator,model_validator
+from pydantic import BaseModel, Field, field_validator,model_validator,computed_field
 from typing import Any, Optional, Literal
 from roles import UserRoles, RoleSetter, AllRoles
 import datetime
 from utils import updateData
 from pydantic_core import Url
+from pubSubPublisherAndSubscriber import subscriber
 
 
 class User(BaseModel):
@@ -61,8 +62,6 @@ class DeadLetter(BaseModel):
     version: int = Field(default=1, alias="_version")
     originalMessage: dict = Field(
         ..., description="The original message payload that failed")
-    topicName: str = Field(
-        None, description="Name of the topic the message was received from")
     subscription: str = Field(
         ..., description="subscription string of the service that failed")
     retryCount: int = Field(default=0,
@@ -76,6 +75,8 @@ class DeadLetter(BaseModel):
     lastTriedAt: datetime.datetime | None = Field(
         default=None, description="When it was last retried")
     publisherProjectId: str = Field(None, description="Project ID of the publisher")
+    endPoint: str | None = Field(None, description="Endpoint URL for the subscription")
+    topic : str = Field(None, description="Topic name for the subscription")
 
     @field_validator('createdAt', mode='before')
     def validate_datetime(cls, value: datetime.datetime) -> datetime.datetime:
@@ -83,15 +84,17 @@ class DeadLetter(BaseModel):
             raise ValueError("Datetime must be timezone-aware")
         return value.astimezone(datetime.timezone.utc)
 
-    @model_validator(mode='after')
-    def setTopicName(self) -> str:
-        pass
+
 
     @model_validator(mode='after')
     def setPublisherProjectId(self) -> str:
         split = self.subscription.split('/')
         self.publisherProjectId = split[1]
-        return self.publisherProjectId
+        subscription = subscriber.get_subscription(subscription=self.subscription)
+        self.endPoint = subscription.push_config.push_endpoint
+        self.topic = subscription.topic.split('/')[-1]
+
+        return self
 
     def retryMessage(self) -> None:
         self.retryCount += 1

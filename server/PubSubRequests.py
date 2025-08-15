@@ -19,6 +19,12 @@ class DeadLetterActions():
         if db.read({'_id': _id}, 'DeadLetters', findOne=True):
             return 'data already exists'
 
+        deadLetterObject = createDeadLetterObject(
+            id=_id,
+            originalMessage=originalMessage,
+            subscription=subscription,
+            )
+
         # Prepare & send an email (single API call with all recipients)
         allUsers = _getAllUsersToSendDeadLetterCreationEmail()
         recipient_emails = [
@@ -35,13 +41,13 @@ class DeadLetterActions():
         if len(pretty_original) > 5000:  # safety truncation
             pretty_original = pretty_original[:5000] + "\n... (truncated)"
 
-        subject = f"Dead Letter: {subscription}"
+        subject = f"Dead Letter: {deadLetterObject.subscription}"
         html_email = f"""
 <!DOCTYPE html>
 <html lang=\"en\">
 <head>
     <meta charset=\"UTF-8\" />
-    <title>New Dead Letter - {subscription}</title>
+    <title>New Dead Letter - {deadLetterObject.subscription} from {deadLetterObject.topic}</title>
     <meta name=\"color-scheme\" content=\"light dark\" />
     <style>
         body {{ font-family: Arial, sans-serif; background:#f5f7fa; margin:0; padding:24px; }}
@@ -66,13 +72,14 @@ class DeadLetterActions():
     <div class=\"card\">
         <div class=\"header\">
             <h1>New Dead Letter Created</h1>
-            <p style=\"margin:4px 0 0; font-size:13px; opacity:.85;\">Project: {subscription})</p>
+            <p style=\"margin:4px 0 0; font-size:13px; opacity:.85;\">Project: {deadLetterObject.subscription})</p>
         </div>
         <div style=\"padding:24px; color:#0f172a;\">
             <p style=\"margin-top:0;\">A new dead letter message has been captured and stored in the dashboard.</p>
             <table class=\"meta-table\" role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">
                 <tr><th>ID</th><td>{_id}</td></tr>
-                <tr><th>Subscriber Name</th><td>{subscription}</td></tr>
+                <tr><th>Subscriber Name</th><td>{deadLetterObject.subscription}</td></tr>
+                <tr><th>Topic Name</th><td>{deadLetterObject.topic}</td></tr>
                 <tr><th>Stored Collection</th><td>DeadLetters</td></tr>
                 <tr><th>Replay Instructions</th><td>Use the dashboard action 'Retry' or the API endpoint for replay.</td></tr>
             </table>
@@ -85,20 +92,14 @@ class DeadLetterActions():
  </body>
 </html>
 """
+        res = db.create(deadLetterObject.model_dump(by_alias=True),
+                        'DeadLetters')
 
         if recipient_emails:
             try:
                 send_mail(recipient_emails, subject, html_email)
             except Exception as e:
                 print(f"Failed to send notification email(s): {e}")
-
-        deadLetterObject = createDeadLetterObject(
-            id=_id,
-            originalMessage=originalMessage,
-            subscription=subscription,
-            )
-        res = db.create(deadLetterObject.model_dump(by_alias=True),
-                        'DeadLetters')
 
         return res
 
