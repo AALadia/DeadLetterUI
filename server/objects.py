@@ -62,12 +62,9 @@ class DeadLetter(BaseModel):
     originalMessage: dict = Field(
         ..., description="The original message payload that failed")
     topicName: str = Field(
-        ..., description="Name of the topic the message was received from")
-    subscriberName: str = Field(
-        ..., description="Name of the subscriber or service that failed")
-    endpoint: str = Field(
-        ..., description="The endpoint that failed to process the message")
-    errorMessage: str = Field(..., description="Error that caused the failure")
+        None, description="Name of the topic the message was received from")
+    subscription: str = Field(
+        ..., description="subscription string of the service that failed")
     retryCount: int = Field(default=0,
                             description="Number of retry attempts made")
     status: Literal["pending", "success",
@@ -78,7 +75,6 @@ class DeadLetter(BaseModel):
         description="When the dead letter was created")
     lastTriedAt: datetime.datetime | None = Field(
         default=None, description="When it was last retried")
-    publisherName : str = Field(None, description="Name of the publisher that sent the message")
     publisherProjectId: str = Field(None, description="Project ID of the publisher")
 
     @field_validator('createdAt', mode='before')
@@ -88,15 +84,12 @@ class DeadLetter(BaseModel):
         return value.astimezone(datetime.timezone.utc)
 
     @model_validator(mode='after')
-    def setPublisherName(self) -> str:
-        split = self.subscriberName.split('/')
-        publisherName = split[0] + '/' + split[1] + '/topics/' + self.topicName
-        self.publisherName = publisherName
-        return self.publisherName
+    def setTopicName(self) -> str:
+        pass
 
     @model_validator(mode='after')
     def setPublisherProjectId(self) -> str:
-        split = self.subscriberName.split('/')
+        split = self.subscription.split('/')
         self.publisherProjectId = split[1]
         return self.publisherProjectId
 

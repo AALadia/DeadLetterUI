@@ -7,10 +7,7 @@ from roles import AllRoles
 def createDeadLetterObject(
         id: str = 'random',
         originalMessage: dict = {'test': 'value'},
-        topicName: str = 'testTopic',
-        subscriberName: str = 'testSubscriber',
-        endpoint: str = 'http://example.com',
-        errorMessage: str = 'Test error message',
+        subscription: str = 'testSubscriber',
         status: str = 'failed',
         createdAt: datetime.datetime = datetime.datetime.now(tz=datetime.timezone.utc),
         lastTriedAt: datetime.datetime | None = None,
@@ -21,10 +18,7 @@ def createDeadLetterObject(
 
     return DeadLetter(_id=id,
                       originalMessage=originalMessage,
-                      topicName=topicName,
-                      subscriberName=subscriberName,
-                      endpoint=endpoint,
-                      errorMessage=errorMessage,
+                      subscription=subscription,
                       status=status,
                       createdAt=createdAt,
                       lastTriedAt=lastTriedAt,)

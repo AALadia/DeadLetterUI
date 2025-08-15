@@ -24,7 +24,7 @@ except Exception as e:
 
 def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod']):
     deadLetter.retryMessage()
-    subscriptionName = deadLetter.subscriberName.split('/')[-1]
+    subscriptionName = deadLetter.subscription.split('/')[-1]
     subscription_path = subscriber.subscription_path(
         deadLetter.publisherProjectId, subscriptionName)
     subscription = subscriber.get_subscription(subscription=subscription_path)

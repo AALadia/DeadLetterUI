@@ -272,11 +272,11 @@ if __name__ == '__main__':
                        meta: Dict[str, Any], kind: str, method: str) -> str:
         atFunction = 'app' if kind == 'app' else 'main'
         className = 'ApiRequests' if kind == 'app' else 'PubSubRequests'
-        
+
         parameters_check = '    if request.is_json:\n        data = request.get_json()\n' if method == 'POST' else ''
         parameters_code = params.as_assignment_block(indent=8, kind=kind)
         decode_message = '        if isinstance(data["message"]["data"],str):\n             data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])\n' if kind == 'appPubSub' else ''
-        pubSubAttributes = '        topicName = data["message"]["attributes"].get("topicName")\n        subscriberName = data["subscription"]\n        endpoint = ""\n        errorMessage = ""\n        publisherProjectId = data["message"]["attributes"].get("publisherProjectId")\n        publisherProjectName = data["message"]["attributes"].get("publisherProjectName")\n        originalMessage = data["message"]["data"]\n' if kind == 'appPubSub' else ''
+        pubSubAttributes = '        subscription = data["subscription"]\n        publisherProjectId = data["message"]["attributes"].get("publisherProjectId")\n        publisherProjectName = data["message"]["attributes"].get("publisherProjectName")\n        originalMessage = data["message"]["data"]\n' if kind == 'appPubSub' else ''
 
         jwt_decorator = '@jwt_required()' if meta['jwtRequired'] else ''
         current_user_code = '        current_user = get_jwt_identity()\n' if (

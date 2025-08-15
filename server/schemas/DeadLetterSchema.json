@@ -73,21 +73,10 @@
             "description": "When it was last retried",
             "title": "Lasttriedat"
         },
-        "publisherName": {
-            "default": null,
-            "description": "Name of the publisher that sent the message",
-            "title": "Publishername",
-            "type": "string"
-        },
         "publisherProjectId": {
+            "default": null,
             "description": "Project ID of the publisher",
             "title": "Publisherprojectid",
-            "type": "string"
-        },
-        "publisherProjectName": {
-            "default": null,
-            "description": "Name of the publisher project",
-            "title": "Publisherprojectname",
             "type": "string"
         }
     },
@@ -97,8 +86,7 @@
         "topicName",
         "subscriberName",
         "endpoint",
-        "errorMessage",
-        "publisherProjectId"
+        "errorMessage"
     ],
     "title": "DeadLetter",
     "type": "object",

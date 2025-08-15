@@ -186,15 +186,9 @@ class PubSub():
                 print(f"Topic {topicName} does not exist")
                 return {"status": "error", "error": "Topic does not exist"}
 
-            attrs = {
-                'publisherProjectId': self.projectId,
-                'publisherProjectName': self.appConfig.projectName,
-                'topicName': topicName,
-            }
-
             topicPath = self.publisher.topic_path(self.projectId, topicName)
             data_bytes = self._serialize_for_pubsub(message)
-            future = self.publisher.publish(topicPath, data_bytes, **attrs)
+            future = self.publisher.publish(topicPath, data_bytes)
             try:
                 message_id = future.result(timeout=15)
                 return {"status": "published", "messageId": message_id}

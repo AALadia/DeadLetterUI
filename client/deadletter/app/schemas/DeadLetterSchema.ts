@@ -43,17 +43,9 @@ export type Createdat = string;
  */
 export type Lasttriedat = string | null;
 /**
- * Name of the publisher that sent the message
- */
-export type Publishername = string;
-/**
  * Project ID of the publisher
  */
 export type Publisherprojectid = string;
-/**
- * Name of the publisher project
- */
-export type Publisherprojectname = string;
 
 export interface DeadLetter {
   _id: Id;
@@ -67,9 +59,7 @@ export interface DeadLetter {
   status?: Status;
   createdAt?: Createdat;
   lastTriedAt?: Lasttriedat;
-  publisherName?: Publishername;
-  publisherProjectId: Publisherprojectid;
-  publisherProjectName?: Publisherprojectname;
+  publisherProjectId?: Publisherprojectid;
 }
 /**
  * The original message payload that failed
