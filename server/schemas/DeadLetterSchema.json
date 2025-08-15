@@ -16,12 +16,6 @@
             "title": "Originalmessage",
             "type": "object"
         },
-        "topicName": {
-            "default": null,
-            "description": "Name of the topic the message was received from",
-            "title": "Topicname",
-            "type": "string"
-        },
         "subscription": {
             "description": "subscription string of the service that failed",
             "title": "Subscription",
@@ -69,6 +63,38 @@
             "description": "Project ID of the publisher",
             "title": "Publisherprojectid",
             "type": "string"
+        },
+        "endPoint": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "description": "Endpoint URL for the subscription",
+            "title": "Endpoint"
+        },
+        "topic": {
+            "default": null,
+            "description": "Topic name for the subscription",
+            "title": "Topic",
+            "type": "string"
+        },
+        "errorMessage": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "description": "Error message if retry failed",
+            "title": "Errormessage"
         }
     },
     "required": [

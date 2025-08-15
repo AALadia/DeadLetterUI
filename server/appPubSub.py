@@ -20,7 +20,6 @@ def createDeadLetter():
         originalMessage = data["message"]["data"].get('originalMessage')
         subscription = data["message"]["data"].get('subscription')
         subscription = data["subscription"]
-        print(f"Creating dead letter for subscription: {subscription}")
         originalMessage = data["message"]["data"]
     try:
         res = PubSubRequests().createDeadLetter(_id, originalMessage, subscription)

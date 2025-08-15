@@ -11,10 +11,6 @@
 export type Id = string;
 export type Version = number;
 /**
- * Name of the topic the message was received from
- */
-export type Topicname = string;
-/**
  * subscription string of the service that failed
  */
 export type Subscription = string;
@@ -38,18 +34,32 @@ export type Lasttriedat = string | null;
  * Project ID of the publisher
  */
 export type Publisherprojectid = string;
+/**
+ * Endpoint URL for the subscription
+ */
+export type Endpoint = string | null;
+/**
+ * Topic name for the subscription
+ */
+export type Topic = string;
+/**
+ * Error message if retry failed
+ */
+export type Errormessage = string | null;
 
 export interface DeadLetter {
   _id: Id;
   _version?: Version;
   originalMessage: Originalmessage;
-  topicName?: Topicname;
   subscription: Subscription;
   retryCount?: Retrycount;
   status?: Status;
   createdAt?: Createdat;
   lastTriedAt?: Lasttriedat;
   publisherProjectId?: Publisherprojectid;
+  endPoint?: Endpoint;
+  topic?: Topic;
+  errorMessage?: Errormessage;
 }
 /**
  * The original message payload that failed

@@ -4,22 +4,12 @@ import React, { useEffect, useState } from 'react';
 import serverRequests from '../_lib/serverRequests';
 import { useAppContext } from '../contexts/AppContext';
 import { ObjectViewerModal } from "./ObjectViewerModal";
+import { DeadLetter } from '../schemas/DeadLetterSchema';
 
-interface DeadLetterRow {
-  _id: string;
-  originalMessage: any;
-  topicName: string;
-  subscriberName: string;
-  endpoint: string;
-  status: 'pending' | 'success' | 'failed';
-  retryCount: number;
-  createdAt: string;
-  lastTriedAt?: string | null;
-  errorMessage?: string;
-}
+
 
 export const DeadLetterTable = () => {
-  const [deadLetters, setDeadLetters] = useState<DeadLetterRow[]>([]);
+  const [deadLetters, setDeadLetters] = useState<DeadLetter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, showSnackbar } = useAppContext();
@@ -73,7 +63,7 @@ export const DeadLetterTable = () => {
         <thead>
           <tr className="bg-gray-200 text-left text-sm font-medium">
             <th className="p-3">Topic</th>
-            <th className="p-3">Subscriber</th>
+            <th className="p-3">Subscription</th>
             <th className="p-3">Message</th>
             <th className="p-3">Error Message</th>
             <th className="p-3">Status</th>
@@ -84,8 +74,8 @@ export const DeadLetterTable = () => {
         <tbody>
           {deadLetters.map((item) => (
             <tr key={item._id} className="border-t hover:bg-gray-50 text-sm">
-              <td className="p-3 font-mono text-xs">{item.topicName}</td>
-              <td className="p-3">{item.subscriberName}</td>
+              <td className="p-3 font-mono text-xs">{item.topic}</td>
+              <td className="p-3">{item.subscription}</td>
               <td className="p-3 max-w-xs">
                 <a
                   onClick={() => {
@@ -99,7 +89,7 @@ export const DeadLetterTable = () => {
                 </a>
               </td>
               <td className="p-3 max-w-xs">
-                <span className="text-red-600">{item.errorMessage}</span>
+                <span className="text-red-600">{item}</span>
               </td>
               <td className="p-3">
                 <span className={`px-2 py-1 rounded text-white text-xs ${item.status === 'pending' ? 'bg-yellow-500' :

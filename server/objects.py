@@ -77,6 +77,7 @@ class DeadLetter(BaseModel):
     publisherProjectId: str = Field(None, description="Project ID of the publisher")
     endPoint: str | None = Field(None, description="Endpoint URL for the subscription")
     topic : str = Field(None, description="Topic name for the subscription")
+    errorMessage: str | None = Field(None, description="Error message if retry failed")
 
     @field_validator('createdAt', mode='before')
     def validate_datetime(cls, value: datetime.datetime) -> datetime.datetime:
@@ -92,7 +93,7 @@ class DeadLetter(BaseModel):
         self.publisherProjectId = split[1]
         subscription = subscriber.get_subscription(subscription=self.subscription)
         self.endPoint = subscription.push_config.push_endpoint
-        self.topic = subscription.topic.split('/')[-1]
+        self.topic = subscription.topic
 
         return self
 
