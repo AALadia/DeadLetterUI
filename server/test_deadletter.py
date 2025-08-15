@@ -8,26 +8,21 @@ import json
 import base64
 from pubSub import PubSub,PubsubMessage
 
+
 def test_deadLetter():
     cwd = os.path.dirname(os.path.abspath(__file__))
     credentials = service_account.Credentials.from_service_account_file(
-        os.path.join(cwd, "keys", "online-store-paperboy-f5f16aed6862.json"))
+        os.path.join(cwd, "keys", "online-store-paperboy-92adc6ce5dc5.json"))
     publisher = pubsub_v1.PublisherClient(credentials=credentials)
-    subscriber = pubsub_v1.SubscriberClient(credentials=credentials)
 
     #publish to createsalesorder topic
     topic_name = "createSalesOrder"
     data = {"_id": generateRandomString(),'customer':'ladidadi'}
     data = PubSub()._serialize_for_pubsub(data)
-
-    attrs = {'topicName' : 'testTopicName','publisherProjectId':'starPackCebu','publisherProjectName':'starPackPhilippines'}
-
-
-    
     future = publisher.publish('projects/online-store-paperboy/topics/' +
                                topic_name,
                                data=data,
-                               **attrs)
+                               )
     res = future.result()
     if res:
         print(f"Message published to {topic_name}: {res}")

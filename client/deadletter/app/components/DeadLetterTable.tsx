@@ -27,7 +27,14 @@ export const DeadLetterTable = () => {
       setLoading(false);
       return;
     }
-    setDeadLetters(res.data || []);
+    const data: DeadLetter[] = res.data || [];
+    // Sort oldest -> latest based on createdAt (assumes ISO string)
+    data.sort((a,b) => {
+      const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
+      const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
+      return ta - tb; // ascending
+    });
+    setDeadLetters(data);
     setLoading(false);
   };
 
@@ -64,6 +71,7 @@ export const DeadLetterTable = () => {
           <tr className="bg-gray-200 text-left text-sm font-medium">
             <th className="p-3">Topic</th>
             <th className="p-3">Subscription</th>
+            <th className="p-3">Created At</th>
             <th className="p-3">Message</th>
             <th className="p-3">Error Message</th>
             <th className="p-3">Status</th>
@@ -76,6 +84,9 @@ export const DeadLetterTable = () => {
             <tr key={item._id} className="border-t hover:bg-gray-50 text-sm">
               <td className="p-3 font-mono text-xs">{item.topic}</td>
               <td className="p-3">{item.subscription}</td>
+              <td className="p-3 whitespace-nowrap text-xs">
+                {item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}
+              </td>
               <td className="p-3 max-w-xs">
                 <a
                   onClick={() => {
@@ -124,7 +135,7 @@ export const DeadLetterTable = () => {
           ))}
           {deadLetters.length === 0 && (
             <tr>
-              <td colSpan={7} className="p-4 text-center text-sm text-gray-500">No dead letters found.</td>
+              <td colSpan={8} className="p-4 text-center text-sm text-gray-500">No dead letters found.</td>
             </tr>
           )}
         </tbody>
