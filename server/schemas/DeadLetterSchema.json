@@ -64,14 +64,18 @@
             "title": "Publisherprojectid",
             "type": "string"
         },
-        "endPoints": {
+        "endPoint": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
             "default": null,
-            "description": "string Endpoint URL for the subscription",
-            "items": {
-                "type": "string"
-            },
-            "title": "Endpoints",
-            "type": "array"
+            "description": "Endpoint URL for the subscription",
+            "title": "Endpoint"
         },
         "topic": {
             "default": null,
@@ -91,19 +95,6 @@
             "default": null,
             "description": "Error message if retry failed",
             "title": "Errormessage"
-        },
-        "originalTopicPath": {
-            "anyOf": [
-                {
-                    "type": "string"
-                },
-                {
-                    "type": "null"
-                }
-            ],
-            "default": null,
-            "description": "Original topic path for the subscription",
-            "title": "Originaltopicpath"
         }
     },
     "required": [

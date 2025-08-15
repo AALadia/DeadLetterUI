@@ -35,9 +35,9 @@ export type Lasttriedat = string | null;
  */
 export type Publisherprojectid = string;
 /**
- * string Endpoint URL for the subscription
+ * Endpoint URL for the subscription
  */
-export type Endpoints = string[];
+export type Endpoint = string | null;
 /**
  * Topic name for the subscription
  */
@@ -46,10 +46,6 @@ export type Topic = string;
  * Error message if retry failed
  */
 export type Errormessage = string | null;
-/**
- * Original topic path for the subscription
- */
-export type Originaltopicpath = string | null;
 
 export interface DeadLetter {
   _id: Id;
@@ -61,10 +57,9 @@ export interface DeadLetter {
   createdAt?: Createdat;
   lastTriedAt?: Lasttriedat;
   publisherProjectId?: Publisherprojectid;
-  endPoints?: Endpoints;
+  endPoint?: Endpoint;
   topic?: Topic;
   errorMessage?: Errormessage;
-  originalTopicPath?: Originaltopicpath;
 }
 /**
  * The original message payload that failed
