@@ -12,3 +12,4 @@ try:
     publisher = pubsub_v1.PublisherClient(credentials=credentials)
 except Exception as e:
     publisher = pubsub_v1.PublisherClient()
+    subscriber = pubsub_v1.SubscriberClient()
