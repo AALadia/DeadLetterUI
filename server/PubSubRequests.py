@@ -13,20 +13,18 @@ class DeadLetterActions():
                   jwtRequired=False,
                   successMessage='Dead letter message created successfully')
     def createDeadLetter(self, _id: str, originalMessage: dict,
-                         subscription: str, originalTopicPath: str
+                          originalTopicPath: str
                          ) -> dict:
 
         # idempotency check
         if db.read({'_id': _id}, 'DeadLetters', findOne=True):
             return 'data already exists'
 
-        subscriptions = publisher.list_topic_subscriptions(request={"topic": originalTopicPath})
-
         deadLetterObject = createDeadLetterObject(
             id=_id,
             originalMessage=originalMessage,
-            subscription=subscription,
-            )
+            originalTopicPath=originalTopicPath,
+        )
 
         # Prepare & send an email (single API call with all recipients)
         allUsers = _getAllUsersToSendDeadLetterCreationEmail()

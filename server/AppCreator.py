@@ -314,7 +314,7 @@ if __name__ == '__main__':
         parameters_check = '    if request.is_json:\n        data = request.get_json()\n' if method == 'POST' else ''
         parameters_code = params.as_assignment_block(indent=8, kind=kind)
         decode_message = '        if isinstance(data["message"]["data"],str):\n             data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])\n' if kind == 'appPubSub' else ''
-        pubSubAttributes = '        subscription = data["subscription"]\n        originalMessage = data["message"]["data"]\n        originalTopicPath=data["message"].get("attributes").get("originalTopicPath")\n' if kind == 'appPubSub' else ''
+        pubSubAttributes = '        originalMessage = data["message"]["data"]\n        originalTopicPath=data["message"].get("attributes").get("originalTopicPath")\n' if kind == 'appPubSub' else ''
         idempotencyCheck = '        messageId = data["message"]["messageId"]\n        if db.read({"_id": messageId},"PubSubMessages",findOne=True):\n            return jsonify({"message": "Message already processed","status":200,"data":None,"currentUser":None}), 200\n' if kind == 'appPubSub' else ''
         jwt_decorator = '@jwt_required()' if meta['jwtRequired'] else ''
         current_user_code = '        current_user = get_jwt_identity()\n' if (
