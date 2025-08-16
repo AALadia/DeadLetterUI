@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 import logging
-from mongoDb import mongoDb
+from mongoDb import mongoDb, db
 from PubSubRequests import PubSubRequests
 import traceback
 from pubSub import PubSub
@@ -16,6 +16,9 @@ def createDeadLetter():
         data = request.get_json()
         if isinstance(data["message"]["data"],str):
              data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])
+        messageId = data["message"]["messageId"]
+        if db.read({"_id": messageId},"PubSubMessages",findOne=True):
+            return jsonify({"message": "Message already processed","status":200,"data":None,"currentUser":None}), 200
         _id = data["message"]["data"].get('_id')
         originalMessage = data["message"]["data"].get('originalMessage')
         subscription = data["message"]["data"].get('subscription')
@@ -27,4 +30,8 @@ def createDeadLetter():
         traceback.print_exc()
         return jsonify({'message': str(e),'data':None,'status':400}), 400
 
+    try:
+        db.create({"_id":messageId},"PubSubMessages")
+    except:
+        pass
     return jsonify({"message": "Dead letter message created successfully", "status":200, "data": res}), 200

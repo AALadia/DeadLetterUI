@@ -189,7 +189,7 @@ class AppCreator:
 
     APP_PUBSUB_IMPORTS = [
         'from flask import Blueprint, jsonify, request', 'import logging',
-        'from mongoDb import mongoDb',
+        'from mongoDb import mongoDb, db',
         'from PubSubRequests import PubSubRequests', 'import traceback',
         'from pubSub import PubSub'
     ]
@@ -315,7 +315,7 @@ if __name__ == '__main__':
         parameters_code = params.as_assignment_block(indent=8, kind=kind)
         decode_message = '        if isinstance(data["message"]["data"],str):\n             data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])\n' if kind == 'appPubSub' else ''
         pubSubAttributes = '        subscription = data["subscription"]\n        originalMessage = data["message"]["data"]\n' if kind == 'appPubSub' else ''
-
+        idempotencyCheck = '        messageId = data["message"]["messageId"]\n        if db.read({"_id": messageId},"PubSubMessages",findOne=True):\n            return jsonify({"message": "Message already processed","status":200,"data":None,"currentUser":None}), 200\n' if kind == 'appPubSub' else ''
         jwt_decorator = '@jwt_required()' if meta['jwtRequired'] else ''
         current_user_code = '        current_user = get_jwt_identity()\n' if (
             meta['jwtRequired'] and not meta['createAccessToken']) else ''
@@ -327,12 +327,16 @@ if __name__ == '__main__':
             'createAccessToken'] else ''
 
         # Response code
-        if meta['createAccessToken']:
-            response_code = f'    return jsonify({{"message": "{meta["successMessage"]}","data":res,"status":200, "access_token": access_token}}), 200'
-        elif meta['jwtRequired']:
-            response_code = f'    return jsonify({{"message": "{meta["successMessage"]}","status":200, "current_user": current_user, "data": res}}), 200'
-        else:
-            response_code = f'    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
+        if kind == 'app':
+            if meta['createAccessToken']:
+                response_code = f'    return jsonify({{"message": "{meta["successMessage"]}","data":res,"status":200, "access_token": access_token}}), 200'
+            elif meta['jwtRequired']:
+                response_code = f'    return jsonify({{"message": "{meta["successMessage"]}","status":200, "current_user": current_user, "data": res}}), 200'
+            else:
+                response_code = f'    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
+        if kind == 'appPubSub':
+
+            response_code = f'    try:\n        db.create({{"_id":messageId}},"PubSubMessages")\n    except:\n        pass\n    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
 
         body_call = f"{className}().{name}({params.comma_join()})" if params.names else f"{className}().{name}(data)"
 
@@ -340,7 +344,7 @@ if __name__ == '__main__':
 @{atFunction}.route('/{name}', methods=['{meta['httpMethod']}'])
 {jwt_decorator}
 def {name}():
-{parameters_check}{decode_message}{parameters_code}{pubSubAttributes}{current_user_code}    try:
+{parameters_check}{decode_message}{idempotencyCheck}{parameters_code}{pubSubAttributes}{current_user_code}    try:
         res = {body_call}
 {access_token_code}    except Exception as e:
         traceback.print_exc()
