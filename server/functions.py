@@ -44,7 +44,7 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod']):
         except Exception as e:
             errors.append((endPoint, str(e)))
 
-    if len(successfulEndpoints) == deadLetter.endPoints:
+    if len(successfulEndpoints) == len(deadLetter.endPoints):
         if localOrProd == 'prod':
             deadLetter.markAsSuccess()
     else:
