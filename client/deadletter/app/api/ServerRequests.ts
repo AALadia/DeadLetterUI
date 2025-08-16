@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Server from "./Server";
-import type { Id, Version, Retrycount, Status, Createdat, Lasttriedat, Publisherprojectid, Endpoints, Errormessage, Originaltopicpath, DeadLetter, Originalmessage } from '../schemas/DeadLetterSchema.ts';
+import type { Id, Messageid, Version, Retrycount, Status, Createdat, Lasttriedat, Publisherprojectid, Endpoints, Errormessage, Originaltopicpath, DeadLetter, Originalmessage } from '../schemas/DeadLetterSchema.ts';
 import type { Name, Email, Password, Id1, Value, Description, Collectionstransacted, Unauthorizedmessage, UserRoles, Usertype, User, Role } from '../schemas/UserSchema.ts';
 
     class ServerRequests extends Server {

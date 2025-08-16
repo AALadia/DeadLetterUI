@@ -9,6 +9,10 @@
  * Unique ID of the failed message
  */
 export type Id = string;
+/**
+ * ID of the message from PubSub
+ */
+export type Messageid = string;
 export type Version = number;
 /**
  * Number of retry attempts made
@@ -45,6 +49,7 @@ export type Originaltopicpath = string | null;
 
 export interface DeadLetter {
   _id: Id;
+  messageId: Messageid;
   _version?: Version;
   originalMessage: Originalmessage;
   retryCount?: Retrycount;

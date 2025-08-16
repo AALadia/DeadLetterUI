@@ -5,6 +5,11 @@
             "title": "Id",
             "type": "string"
         },
+        "messageId": {
+            "description": "ID of the message from PubSub",
+            "title": "Messageid",
+            "type": "string"
+        },
         "_version": {
             "default": 1,
             "title": "Version",
@@ -97,6 +102,7 @@
     },
     "required": [
         "_id",
+        "messageId",
         "originalMessage"
     ],
     "title": "DeadLetter",
