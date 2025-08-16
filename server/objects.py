@@ -59,6 +59,7 @@ class DeadLetter(BaseModel):
     id: str = Field(...,
                     description="Unique ID of the failed message",
                     alias="_id")
+    messageId: str = Field(..., description="ID of the message from PubSub")
     version: int = Field(default=1, alias="_version")
     originalMessage: dict = Field(
         ..., description="The original message payload that failed")
@@ -89,17 +90,20 @@ class DeadLetter(BaseModel):
 
     @model_validator(mode='after')
     def setPublisherProjectId(self) -> 'DeadLetter':
+        
         split = self.originalTopicPath.split('/')
         self.publisherProjectId = split[1]
-        subscriptions = publisher.list_topic_subscriptions(
-            request={"topic": self.originalTopicPath})
-        endpoints = []
-        for sub in subscriptions:
-            sub = subscriber.get_subscription(request={"subscription": sub})
-            if sub.push_config and sub.push_config.push_endpoint:
-                endpoints.append(sub.push_config.push_endpoint)
+        
+        if self.endPoints is None:
+            subscriptions = publisher.list_topic_subscriptions(
+                request={"topic": self.originalTopicPath})
+            endpoints = []
+            for sub in subscriptions:
+                sub = subscriber.get_subscription(request={"subscription": sub})
+                if sub.push_config and sub.push_config.push_endpoint:
+                    endpoints.append(sub.push_config.push_endpoint)
 
-        self.endPoints = endpoints
+            self.endPoints = endpoints
         return self
 
     def retryMessage(self) -> None:

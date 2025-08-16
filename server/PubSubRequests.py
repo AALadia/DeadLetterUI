@@ -12,7 +12,7 @@ class DeadLetterActions():
     @route_config(httpMethod='POST',
                   jwtRequired=False,
                   successMessage='Dead letter message created successfully')
-    def createDeadLetter(self, _id: str, originalMessage: dict,
+    def createDeadLetter(self, _id: str,messageId:str, originalMessage: dict,
                           originalTopicPath: str
                          ) -> dict:
 
@@ -22,6 +22,7 @@ class DeadLetterActions():
 
         deadLetterObject = createDeadLetterObject(
             id=_id,
+            messageId=messageId,
             originalMessage=originalMessage,
             originalTopicPath=originalTopicPath,
         )

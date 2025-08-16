@@ -6,6 +6,7 @@ from roles import AllRoles
 
 def createDeadLetterObject(
     id: str = 'random',
+    messageId:  str = 'random',
     originalMessage: dict = {'test': 'value'},
     originalTopicPath: str = "projects/starpack-b149d/topics/test",
     status: str = 'failed',
@@ -17,9 +18,12 @@ def createDeadLetterObject(
 
     if id == 'random':
         id = generateRandomString()
+    if messageId == 'random':
+        messageId = generateRandomString()
 
     return DeadLetter(
         _id=id,
+        messageId=messageId,
         originalMessage=originalMessage,
         retryCount=retryCount,
         status=status,

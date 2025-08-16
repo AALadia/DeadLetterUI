@@ -12,15 +12,18 @@ from typing import Literal
 
 def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod']):
     deadLetter.retryMessage()
-    base_url, last_segment = split_url_and_last_segment(
-        deadLetter.endPoint)
-    serverRequest = ServerRequest(serverBaseUrl=base_url,
-                                  headers={"Content-Type": "application/json"})
-    try:
+
+    successfulEndpoints = []
+    errors = []
+    for endPoint in deadLetter.endPoints:
+        base_url, last_segment = split_url_and_last_segment(
+            endPoint)
+        serverRequest = ServerRequest(serverBaseUrl=base_url,
+                                    headers={"Content-Type": "application/json"})
         # convert to utf8 original message
         original_json = json.dumps(deadLetter.originalMessage,
-                                   ensure_ascii=False,
-                                   separators=(",", ":"))
+                                ensure_ascii=False,
+                                separators=(",", ":"))
         # Encode to UTF-8, then Base64, then ASCII string
         data_b64 = base64.b64encode(
             original_json.encode("utf-8")).decode("ascii")
@@ -28,16 +31,27 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod']):
         payload = {
             "message": {
                 "data": data_b64,
+                "messageId" : deadLetter.messageId,
+                "attributes" : {
+                    "originalTopicPath": deadLetter.originalTopicPath,
+                }
             },
-            "subscription": deadLetter.subscription
+            "subscription": ""
         }
-        res = serverRequest.post(last_segment, payload=payload)
+        try:
+            res = serverRequest.post(last_segment, payload=payload)
+            successfulEndpoints.append(endPoint)
+        except Exception as e:
+            errors.append((endPoint, str(e)))
 
+    if len(successfulEndpoints) == deadLetter.endPoints:
         if localOrProd == 'prod':
             deadLetter.markAsSuccess()
-
-    except Exception as e:
-        deadLetter.markAsFailed(str(e))
+    else:
+        errorString = ''
+        for x in errors:
+            errorString += f" - {x[0]}: {x[1]}\n"
+        deadLetter.markAsFailed(errorString)
 
     return deadLetter
 
