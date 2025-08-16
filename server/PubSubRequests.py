@@ -4,6 +4,7 @@ from mongoDb import db
 from emailSender import send_mail
 from functions import _getAllUsersToSendDeadLetterCreationEmail
 import json
+from pubSubPublisherAndSubscriber import publisher
 
 
 class DeadLetterActions():
@@ -12,12 +13,14 @@ class DeadLetterActions():
                   jwtRequired=False,
                   successMessage='Dead letter message created successfully')
     def createDeadLetter(self, _id: str, originalMessage: dict,
-                         subscription: str
+                         subscription: str, originalTopicPath: str
                          ) -> dict:
 
         # idempotency check
         if db.read({'_id': _id}, 'DeadLetters', findOne=True):
             return 'data already exists'
+
+        subscriptions = publisher.list_topic_subscriptions(request={"topic": originalTopicPath})
 
         deadLetterObject = createDeadLetterObject(
             id=_id,

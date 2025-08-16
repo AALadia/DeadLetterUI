@@ -16,11 +16,6 @@
             "title": "Originalmessage",
             "type": "object"
         },
-        "subscription": {
-            "description": "subscription string of the service that failed",
-            "title": "Subscription",
-            "type": "string"
-        },
         "retryCount": {
             "default": 0,
             "description": "Number of retry attempts made",
@@ -64,24 +59,14 @@
             "title": "Publisherprojectid",
             "type": "string"
         },
-        "endPoint": {
-            "anyOf": [
-                {
-                    "type": "string"
-                },
-                {
-                    "type": "null"
-                }
-            ],
+        "endPoints": {
             "default": null,
             "description": "Endpoint URL for the subscription",
-            "title": "Endpoint"
-        },
-        "topic": {
-            "default": null,
-            "description": "Topic name for the subscription",
-            "title": "Topic",
-            "type": "string"
+            "items": {
+                "type": "string"
+            },
+            "title": "Endpoints",
+            "type": "array"
         },
         "errorMessage": {
             "anyOf": [
@@ -95,12 +80,24 @@
             "default": null,
             "description": "Error message if retry failed",
             "title": "Errormessage"
+        },
+        "originalTopicPath": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "description": "Original topic path for the message",
+            "title": "Originaltopicpath"
         }
     },
     "required": [
         "_id",
-        "originalMessage",
-        "subscription"
+        "originalMessage"
     ],
     "title": "DeadLetter",
     "type": "object",

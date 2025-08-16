@@ -7,11 +7,12 @@ from roles import AllRoles
 def createDeadLetterObject(
     id: str = 'random',
     originalMessage: dict = {'test': 'value'},
-    subscription: str = "projects/starpack-b149d/subscriptions/deadLetterPush",
+    originalTopicPath: str = "projects/starpack-b149d/topics/test",
     status: str = 'failed',
     createdAt: datetime.datetime = datetime.datetime.now(
         tz=datetime.timezone.utc),
     lastTriedAt: datetime.datetime | None = None,
+    retryCount:int = 0
 ) -> DeadLetter:
 
     if id == 'random':
@@ -20,10 +21,11 @@ def createDeadLetterObject(
     return DeadLetter(
         _id=id,
         originalMessage=originalMessage,
-        subscription=subscription,
+        retryCount=retryCount,
         status=status,
         createdAt=createdAt,
         lastTriedAt=lastTriedAt,
+        originalTopicPath=originalTopicPath,
     )
 
 
