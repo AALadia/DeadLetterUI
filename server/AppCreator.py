@@ -336,7 +336,7 @@ if __name__ == '__main__':
                 response_code = f'    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
         if kind == 'appPubSub':
 
-            response_code = f'    try:\n        db.create({{"_id":messageId}},"PubSubMessages")\n    except:\n        pass\n    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
+            response_code = f'    try:\n        db.create({{"_id":messageId,"_version":0}},"PubSubMessages")\n    except:\n        pass\n    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
 
         body_call = f"{className}().{name}({params.comma_join()})" if params.names else f"{className}().{name}(data)"
 

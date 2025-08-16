@@ -31,7 +31,7 @@ def createDeadLetter():
         return jsonify({'message': str(e),'data':None,'status':400}), 400
 
     try:
-        db.create({"_id":messageId},"PubSubMessages")
+        db.create({"_id":messageId,"_version":0},"PubSubMessages")
     except:
         pass
     return jsonify({"message": "Dead letter message created successfully", "status":200, "data": res}), 200
