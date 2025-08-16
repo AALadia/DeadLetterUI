@@ -188,9 +188,11 @@ class AppCreator:
     ]
 
     APP_PUBSUB_IMPORTS = [
-        'from flask import Blueprint, jsonify, request', 'import logging',
+        'from flask import Blueprint, jsonify, request',
+        'import logging',
         'from mongoDb import mongoDb, db',
-        'from PubSubRequests import PubSubRequests', 'import traceback',
+        'from PubSubRequests import PubSubRequests',
+        'import traceback',
         'from pubSub import PubSub'
     ]
 
