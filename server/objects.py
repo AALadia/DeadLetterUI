@@ -1,10 +1,10 @@
-from pydantic import BaseModel, Field, field_validator,model_validator,computed_field
-from typing import Any, Optional, Literal,Self
+from pydantic import BaseModel, Field, field_validator, model_validator, computed_field
+from typing import Any, Optional, Literal
 from roles import UserRoles, RoleSetter, AllRoles
 import datetime
 from utils import updateData
 from pydantic_core import Url
-from pubSubPublisherAndSubscriber import publisher,subscriber
+from pubSubPublisherAndSubscriber import publisher, subscriber
 
 
 class User(BaseModel):
@@ -72,10 +72,14 @@ class DeadLetter(BaseModel):
         description="When the dead letter was created")
     lastTriedAt: datetime.datetime | None = Field(
         default=None, description="When it was last retried")
-    publisherProjectId: str = Field(None, description="Project ID of the publisher")
-    endPoints: list[str] = Field(None, description="Endpoint URL for the subscription")
-    errorMessage: str | None = Field(None, description="Error message if retry failed")
-    originalTopicPath: str | None = Field(None, description="Original topic path for the message")
+    publisherProjectId: str = Field(None,
+                                    description="Project ID of the publisher")
+    endPoints: list[str] = Field(
+        None, description="Endpoint URL for the subscription")
+    errorMessage: str | None = Field(
+        None, description="Error message if retry failed")
+    originalTopicPath: str | None = Field(
+        None, description="Original topic path for the message")
 
     @field_validator('createdAt', mode='before')
     def validate_datetime(cls, value: datetime.datetime) -> datetime.datetime:
@@ -84,10 +88,11 @@ class DeadLetter(BaseModel):
         return value.astimezone(datetime.timezone.utc)
 
     @model_validator(mode='after')
-    def setPublisherProjectId(self) -> Self:
+    def setPublisherProjectId(self) -> 'DeadLetter':
         split = self.originalTopicPath.split('/')
         self.publisherProjectId = split[1]
-        subscriptions = publisher.list_topic_subscriptions(request={"topic": self.originalTopicPath})
+        subscriptions = publisher.list_topic_subscriptions(
+            request={"topic": self.originalTopicPath})
         endpoints = []
         for sub in subscriptions:
             sub = subscriber.get_subscription(request={"subscription": sub})
