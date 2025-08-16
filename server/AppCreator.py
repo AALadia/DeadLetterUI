@@ -344,7 +344,7 @@ if __name__ == '__main__':
 @{atFunction}.route('/{name}', methods=['{meta['httpMethod']}'])
 {jwt_decorator}
 def {name}():
-{parameters_check}{decode_message}{idempotencyCheck}{parameters_code}{pubSubAttributes}{current_user_code}    try:
+{parameters_check}{decode_message}{parameters_code}{pubSubAttributes}{idempotencyCheck}{current_user_code}    try:
         res = {body_call}
 {access_token_code}    except Exception as e:
         traceback.print_exc()
