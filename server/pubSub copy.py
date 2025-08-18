@@ -127,7 +127,8 @@ class PubSub():
                 # Load service account key for testing environment
                 try:
                     cwd = os.path.dirname(os.path.abspath(__file__))
-                    key_path = os.path.join(cwd, "keys", "starpack-b149d-ea86f6d0c9ec.json")
+                    key_path = os.path.join(
+                        cwd, "keys", "pustananaccounting-b3bc6f897fdd.json")
                     credentials = service_account.Credentials.from_service_account_file(
                         key_path)
 
