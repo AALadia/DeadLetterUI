@@ -25,6 +25,9 @@ def test_deadLetter():
                                  originalTopicPath=topicPath,
                                )
     res = future.result()
+    future = publisher.publish(topicPath,
+                               data=data,
+                               )
     if res:
         print(f"Message published to {topic_name}: {res}")
 

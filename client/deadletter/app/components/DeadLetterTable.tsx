@@ -70,7 +70,6 @@ export const DeadLetterTable = () => {
         <thead>
           <tr className="bg-gray-200 text-left text-sm font-medium">
             <th className="p-3">Topic</th>
-            <th className="p-3">Subscription</th>
             <th className="p-3">Created At</th>
             <th className="p-3">Message</th>
             <th className="p-3">Error Message</th>
@@ -82,8 +81,7 @@ export const DeadLetterTable = () => {
         <tbody>
           {deadLetters.map((item) => (
             <tr key={item._id} className="border-t hover:bg-gray-50 text-sm">
-              <td className="p-3 font-mono text-xs">{item.topic}</td>
-              <td className="p-3">{item.subscription}</td>
+              <td className="p-3 font-mono text-xs">{item.originalTopicPath}</td>
               <td className="p-3 whitespace-nowrap text-xs">
                 {item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}
               </td>
