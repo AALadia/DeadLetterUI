@@ -31,6 +31,7 @@ def _compute_project_root(start: Path) -> Path:
         cur = cur.parent
 
 
+PORT: int = 2222
 PROJECT_ROOT: Path = _compute_project_root(Path(__file__).resolve().parent)
 SERVER_DIR: Path = PROJECT_ROOT / 'server'
 CLIENT_DIR: Path = PROJECT_ROOT / 'client'
@@ -290,18 +291,18 @@ class AppCreator:
     def _main_function_block(self, kind: str) -> str:
         if kind != 'app':
             return ''
-        return ("""
+        return (f"""
 if __name__ == '__main__':
     if (AppConfig().getIsDevEnvironment()):
-        print(f"\033[92m_______________________{AppConfig().getEnvironment().upper()}_______________________\033[0m")
+        print(f"\033[92m_______________________{{AppConfig().getEnvironment().upper()}}_______________________\033[0m")
     if AppConfig().getIsProductionEnvironment():
-        print(f"\033[91m_______________________{AppConfig().getEnvironment().upper()}_______________________\033[0m")
+        print(f"\033[91m_______________________{{AppConfig().getEnvironment().upper()}}_______________________\033[0m")
 
     from Settings import DatabaseSettingUpdater
     DatabaseSettingUpdater().updateDatabaseSettingsToDefault()
 
     if AppConfig().getisLocalEnvironment():
-        app.run(debug=False, host='0.0.0.0', port=5000)
+        app.run(debug=False, host='0.0.0.0', port={PORT})
     else:
         app.run(host='0.0.0.0', port=8080)
 """)
@@ -441,15 +442,15 @@ def {name}():
         ts_class_lines.append("}")
         ts_class_lines.append("\nexport default ServerRequests;\n")
 
-        serverCode = """
-class Server {
+        serverCode = f"""
+class Server {{
     public apiUrl: string | null;
-    constructor() {
+    constructor() {{
         const next_env = process.env.NODE_ENV || 'development';
-        const urls = { localApi: 'http://127.0.0.1:5000', productionApi: null };
+        const urls = {{ localApi: 'http://127.0.0.1:{PORT}', productionApi: null }};
         this.apiUrl = next_env === 'production' ? urls.productionApi : urls.localApi;
-    }
-}
+    }}
+}}
 export default Server;"""
 
         clientDir = str(CLIENT_API_DIR)

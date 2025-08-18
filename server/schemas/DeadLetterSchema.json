@@ -59,19 +59,33 @@
             "title": "Lasttriedat"
         },
         "publisherProjectId": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
             "default": null,
             "description": "Project ID of the publisher",
-            "title": "Publisherprojectid",
-            "type": "string"
+            "title": "Publisherprojectid"
         },
         "endPoints": {
+            "anyOf": [
+                {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                {
+                    "type": "null"
+                }
+            ],
             "default": null,
             "description": "Endpoint URL for the subscription",
-            "items": {
-                "type": "string"
-            },
-            "title": "Endpoints",
-            "type": "array"
+            "title": "Endpoints"
         },
         "errorMessage": {
             "anyOf": [

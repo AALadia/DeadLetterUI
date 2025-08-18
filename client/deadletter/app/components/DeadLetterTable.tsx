@@ -12,7 +12,7 @@ export const DeadLetterTable = () => {
   const [deadLetters, setDeadLetters] = useState<DeadLetter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, showSnackbar } = useAppContext();
+  const { user, showSnackbar,localEndpointUrl } = useAppContext();
   const [openObjectViewer, setOpenObjectViewer] = useState<boolean>(false);
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
 
@@ -50,7 +50,7 @@ export const DeadLetterTable = () => {
     if (!dl) return;
 
     setDeadLetters(prev => prev.map(d => d._id === id ? { ...d, status: 'pending' } : d));
-    const res = await serverRequests.replayDeadLetter(id,target, user?._id || '');
+    const res = await serverRequests.replayDeadLetter(id, target, localEndpointUrl, user?._id || '');
     showSnackbar(res,4000)
     if (res.status === 200) {
       const updated = res.data;
@@ -65,75 +65,64 @@ export const DeadLetterTable = () => {
   if (error) return <div className="text-red-600 text-sm">{error}</div>;
 
   return (
-    <div className="overflow-x-auto mt-6 w-full">
-      <table className="min-w-full bg-white shadow rounded">
+    <div className="overflow-x-auto mt-6 w-full surface-card p-4">
+      <table className="table-modern">
         <thead>
-          <tr className="bg-gray-200 text-left text-sm font-medium">
-            <th className="p-3">Topic</th>
-            <th className="p-3">Created At</th>
-            <th className="p-3">Message</th>
-            <th className="p-3">Error Message</th>
-            <th className="p-3">Status</th>
-            <th className="p-3">Retries</th>
-            <th className="p-3">Actions</th>
+          <tr>
+            <th>Topic</th>
+            <th>Created At</th>
+            <th>Message</th>
+            <th>Error Message</th>
+            <th>Status</th>
+            <th>Retries</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {deadLetters.map((item) => (
-            <tr key={item._id} className="border-t hover:bg-gray-50 text-sm">
-              <td className="p-3 font-mono text-xs">{item.originalTopicPath}</td>
-              <td className="p-3 whitespace-nowrap text-xs">
-                {item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}
-              </td>
-              <td className="p-3 max-w-xs">
-                <a
-                  onClick={() => {
-                    setOpenObjectViewer(true);
-                    setSelectedMessage(item.originalMessage);
-                  }}
-                  className="text-blue-600 truncate block overflow-hidden whitespace-nowrap hover:underline"
-                  title={JSON.stringify(item.originalMessage)} // tooltip with full text
-                >
-                  {JSON.stringify(item.originalMessage)}
-                </a>
-              </td>
-              <td className="p-3 max-w-xs">
-                <span className="text-red-600">{item.errorMessage}</span>
-              </td>
-              <td className="p-3">
-                <span className={`px-2 py-1 rounded text-white text-xs ${item.status === 'pending' ? 'bg-yellow-500' :
-                    item.status === 'success' ? 'bg-green-500' :
-                      'bg-red-500'
-                  }`}>
-                  {item.status}
-                </span>
-              </td>
-              <td className="p-3 text-center">{item.retryCount}</td>
-              <td className="p-3">
-                <div className="flex gap-1 flex-wrap">
-                  <button
-                    className="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
-                    onClick={() => handleRetry(item._id, 'prod')}
-                    disabled={item.status === 'success'}
-                    title="Retry against production endpoint"
+          {deadLetters.map((item) => {
+            const statusClass = item.status === 'success' ? 'badge-success' : item.status === 'pending' ? 'badge-pending' : 'badge-failed';
+            return (
+              <tr key={item._id}>
+                <td className="mono text-xs max-w-[160px] truncate" title={item.originalTopicPath || ''}>{item.originalTopicPath || '-'}</td>
+                <td className="whitespace-nowrap text-xs opacity-80">{item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
+                <td className="max-w-xs">
+                  <a
+                    onClick={() => { setOpenObjectViewer(true); setSelectedMessage(item.originalMessage); }}
+                    className="text-[var(--accent)] truncate block overflow-hidden whitespace-nowrap hover:underline cursor-pointer"
+                    title={JSON.stringify(item.originalMessage)}
                   >
-                    Retry Prod
-                  </button>
-                  <button
-                    className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                    onClick={() => handleRetry(item._id, 'local')}
-                    disabled={item.status === 'success'}
-                    title="Retry against localhost (debug)"
-                  >
-                    Retry Local
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
+                    {JSON.stringify(item.originalMessage)}
+                  </a>
+                </td>
+                <td className="max-w-xs text-xs">
+                  <span className="text-[var(--danger)]" title={item.errorMessage || ''}>{item.errorMessage}</span>
+                </td>
+                <td>
+                  <span className={`badge ${statusClass}`}>{item.status}</span>
+                </td>
+                <td className="text-center text-xs">{item.retryCount}</td>
+                <td>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleRetry(item._id, 'prod')}
+                      disabled={item.status === 'success'}
+                      title="Retry against production endpoint"
+                    >Prod</button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => handleRetry(item._id, 'local')}
+                      disabled={item.status === 'success'}
+                      title="Retry against localhost (debug)"
+                    >Local</button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
           {deadLetters.length === 0 && (
             <tr>
-              <td colSpan={8} className="p-4 text-center text-sm text-gray-500">No dead letters found.</td>
+              <td colSpan={8} className="p-6 text-center text-sm opacity-60">No dead letters found.</td>
             </tr>
           )}
         </tbody>

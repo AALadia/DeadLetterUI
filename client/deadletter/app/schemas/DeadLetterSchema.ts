@@ -33,11 +33,11 @@ export type Lasttriedat = string | null;
 /**
  * Project ID of the publisher
  */
-export type Publisherprojectid = string;
+export type Publisherprojectid = string | null;
 /**
  * Endpoint URL for the subscription
  */
-export type Endpoints = string[];
+export type Endpoints = string[] | null;
 /**
  * Error message if retry failed
  */

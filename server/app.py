@@ -82,10 +82,11 @@ def replayDeadLetter():
         data = request.get_json()
         deadLetterId = data.get('deadLetterId')
         localOrProd = data.get('localOrProd')
+        localEndpoint = data.get('localEndpoint')
         userId = data.get('userId')
         current_user = get_jwt_identity()
     try:
-        res = ApiRequests().replayDeadLetter(deadLetterId, localOrProd, userId)
+        res = ApiRequests().replayDeadLetter(deadLetterId, localOrProd, localEndpoint, userId)
     except Exception as e:
         traceback.print_exc()
         return jsonify({'message': str(e),'data':None,'status':400}), 400
@@ -166,6 +167,6 @@ if __name__ == '__main__':
     DatabaseSettingUpdater().updateDatabaseSettingsToDefault()
 
     if AppConfig().getisLocalEnvironment():
-        app.run(debug=False, host='0.0.0.0', port=5000)
+        app.run(debug=False, host='0.0.0.0', port=2222)
     else:
         app.run(host='0.0.0.0', port=8080)

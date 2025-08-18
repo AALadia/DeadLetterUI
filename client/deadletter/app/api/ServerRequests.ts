@@ -69,7 +69,7 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
         }
     }
 
-    async replayDeadLetter(deadLetterId: string, localOrProd: 'local' | 'prod', userId: string): Promise<any> {
+    async replayDeadLetter(deadLetterId: string, localOrProd: 'local' | 'prod', localEndpoint: string | null, userId: string): Promise<any> {
         try {
         const res = await fetch(`${this.apiUrl}/replayDeadLetter`, {
             method: 'POST',
@@ -77,7 +77,7 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("access_token")}`
             },
-            body: JSON.stringify({"deadLetterId": deadLetterId, "localOrProd": localOrProd, "userId": userId}),
+            body: JSON.stringify({"deadLetterId": deadLetterId, "localOrProd": localOrProd, "localEndpoint": localEndpoint, "userId": userId}),
             cache: 'no-store'
         });
         const data = await res.json();

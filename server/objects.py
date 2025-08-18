@@ -97,7 +97,7 @@ class DeadLetter(BaseModel):
         # forget this because we cant get the subscription endpoints if we dont 
         # have the original topic path.
         if self.originalTopicPath is None:
-            return
+            return self
 
         split = self.originalTopicPath.split('/')
         self.publisherProjectId = split[1]

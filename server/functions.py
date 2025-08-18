@@ -10,16 +10,22 @@ from mongoDb import db
 from typing import Literal
 
 
-def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod']):
+def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod'],localEndpoint: str | None):
     deadLetter.retryMessage()
 
     successfulEndpoints = []
     errors = []
 
-    if endPoint is None:
-        raise ValueError("Endpoint is None. Please update the dead letter object in MongoDB and update the endPoints : list[str]. To prevent this from happening again check the pubSub publish message function and add the key originalTopicPath to the attributes of the message.")
+    if deadLetter.endPoints is None:
+        raise ValueError("Endpoints is None. Please update the dead letter object in MongoDB and update the key endPoints : list[str]. To prevent this from happening again check the pubSub publish message function and add the key originalTopicPath to the attributes of the message.")
 
-    for endPoint in deadLetter.endPoints:
+    # we use localEndpoint if provided
+    if localEndpoint is not None:
+        endPoints = [localEndpoint]
+    else:
+        endPoints = deadLetter.endPoints
+
+    for endPoint in endPoints:
         base_url, last_segment = split_url_and_last_segment(
             endPoint)
         serverRequest = ServerRequest(serverBaseUrl=base_url,
