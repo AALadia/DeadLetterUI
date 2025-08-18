@@ -20,14 +20,15 @@ def test_deadLetter():
     data = {"_id": generateRandomString(),'customer':'ladidadi'}
     data = PubSub()._serialize_for_pubsub(data)
     topicPath = 'projects/online-store-paperboy/topics/' + topic_name
+    # future = publisher.publish(topicPath,
+    #                            data=data,
+    #                              originalTopicPath=topicPath,
+    #                            )
+    # res = future.result()
     future = publisher.publish(topicPath,
                                data=data,
-                                 originalTopicPath=topicPath,
                                )
     res = future.result()
-    future = publisher.publish(topicPath,
-                               data=data,
-                               )
     if res:
         print(f"Message published to {topic_name}: {res}")
 

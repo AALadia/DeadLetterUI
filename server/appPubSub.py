@@ -16,7 +16,6 @@ def createDeadLetter():
         data = request.get_json()
         if isinstance(data["message"]["data"],str):
              data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])
-        _id = data["message"]["data"].get('_id')
         messageId = data["message"]["data"].get('messageId')
         originalMessage = data["message"]["data"].get('originalMessage')
         originalTopicPath = data["message"]["data"].get('originalTopicPath')
@@ -26,7 +25,7 @@ def createDeadLetter():
         if db.read({"_id": messageId},"PubSubMessages",findOne=True):
             return jsonify({"message": "Message already processed","status":200,"data":None,"currentUser":None}), 200
     try:
-        res = PubSubRequests().createDeadLetter(_id, messageId, originalMessage, originalTopicPath)
+        res = PubSubRequests().createDeadLetter(messageId, originalMessage, originalTopicPath)
     except Exception as e:
         traceback.print_exc()
         return jsonify({'message': str(e),'data':None,'status':400}), 400

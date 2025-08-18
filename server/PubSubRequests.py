@@ -12,16 +12,16 @@ class DeadLetterActions():
     @route_config(httpMethod='POST',
                   jwtRequired=False,
                   successMessage='Dead letter message created successfully')
-    def createDeadLetter(self, _id: str,messageId:str, originalMessage: dict,
+    def createDeadLetter(self,messageId:str, originalMessage: dict,
                           originalTopicPath: str
                          ) -> dict:
 
         # idempotency check
-        if db.read({'_id': _id}, 'DeadLetters', findOne=True):
+        if db.read({'_id': originalMessage['_id']}, 'DeadLetters', findOne=True):
             return 'data already exists'
 
         deadLetterObject = createDeadLetterObject(
-            id=_id,
+            id=messageId,
             messageId=messageId,
             originalMessage=originalMessage,
             originalTopicPath=originalTopicPath,
