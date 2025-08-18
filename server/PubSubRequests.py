@@ -79,7 +79,7 @@ class DeadLetterActions():
         <div style=\"padding:24px; color:#0f172a;\">
             <p style=\"margin-top:0;\">A new dead letter message has been captured and stored in the dashboard.</p>
             <table class=\"meta-table\" role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">
-                <tr><th>ID</th><td>{_id}</td></tr>
+                <tr><th>ID</th><td>{messageId}</td></tr>
                 <tr><th>Topic Name</th><td>{originalTopicPath}</td></tr>
                 <tr><th>Stored Collection</th><td>DeadLetters</td></tr>
                 <tr><th>Replay Instructions</th><td>Use the dashboard action 'Retry' or the API endpoint for replay.</td></tr>
