@@ -19,9 +19,10 @@ def test_deadLetter():
     topic_name = "createSalesOrder"
     data = {"_id": generateRandomString(),'customer':'ladidadi'}
     data = PubSub()._serialize_for_pubsub(data)
-    future = publisher.publish('projects/online-store-paperboy/topics/' +
-                               topic_name,
+    topicPath = 'projects/online-store-paperboy/topics/' + topic_name
+    future = publisher.publish(topicPath,
                                data=data,
+                                 originalTopicPath=topicPath,
                                )
     res = future.result()
     if res:

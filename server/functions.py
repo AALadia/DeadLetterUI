@@ -15,6 +15,10 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod']):
 
     successfulEndpoints = []
     errors = []
+
+    if endPoint is None:
+        raise ValueError("Endpoint is None. Please update the dead letter object in MongoDB and update the endPoints : list[str]. To prevent this from happening again check the pubSub publish message function and add the key originalTopicPath to the attributes of the message.")
+
     for endPoint in deadLetter.endPoints:
         base_url, last_segment = split_url_and_last_segment(
             endPoint)

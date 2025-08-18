@@ -91,6 +91,14 @@ class DeadLetter(BaseModel):
     @model_validator(mode='after')
     def setPublisherProjectId(self) -> 'DeadLetter':
         
+        # sometimes the publisher forgets to add attribute of originalTopicPath
+        # we still want to be able to create the dead letter but disables some 
+        # features of the app. They have to manually input the endpoint if they
+        # forget this because we cant get the subscription endpoints if we dont 
+        # have the original topic path.
+        if self.originalTopicPath is None:
+            return
+
         split = self.originalTopicPath.split('/')
         self.publisherProjectId = split[1]
         
@@ -102,6 +110,7 @@ class DeadLetter(BaseModel):
                 sub = subscriber.get_subscription(request={"subscription": sub})
                 if sub.push_config and sub.push_config.push_endpoint:
                     endpoints.append(sub.push_config.push_endpoint)
+                
 
             self.endPoints = endpoints
         return self
