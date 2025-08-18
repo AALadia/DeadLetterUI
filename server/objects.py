@@ -73,9 +73,9 @@ class DeadLetter(BaseModel):
         description="When the dead letter was created")
     lastTriedAt: datetime.datetime | None = Field(
         default=None, description="When it was last retried")
-    publisherProjectId: str = Field(None,
+    publisherProjectId: str | None = Field(None,
                                     description="Project ID of the publisher")
-    endPoints: list[str] = Field(
+    endPoints: list[str] | None = Field(
         None, description="Endpoint URL for the subscription")
     errorMessage: str | None = Field(
         None, description="Error message if retry failed")
