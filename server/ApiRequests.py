@@ -154,7 +154,7 @@ class DeadLetterActions():
                         projection: dict | None = None) -> List[DeadLetter]:
         """Fetch a list of dead letters with optional filter and projection."""
 
-        deadLetters = db.read({'status': 'failed'},
+        deadLetters = db.read({'status': 'failed',"originalMessage.isTestForAppDoNotDelete": { "$exists": False }},
                               'DeadLetters',
                               projection=projection)
         return deadLetters
