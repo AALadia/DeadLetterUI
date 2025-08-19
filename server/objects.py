@@ -5,6 +5,7 @@ import datetime
 from utils import updateData
 from pydantic_core import Url
 from pubSubPublisherAndSubscriber import publisher, subscriber
+from google.api_core.exceptions import PermissionDenied
 
 
 class User(BaseModel):
@@ -103,14 +104,16 @@ class DeadLetter(BaseModel):
         self.publisherProjectId = split[1]
         
         if self.endPoints is None:
-            subscriptions = publisher.list_topic_subscriptions(
-                request={"topic": self.originalTopicPath})
-            endpoints = []
-            for sub in subscriptions:
-                sub = subscriber.get_subscription(request={"subscription": sub})
-                if sub.push_config and sub.push_config.push_endpoint:
-                    endpoints.append(sub.push_config.push_endpoint)
-                
+            try:
+                subscriptions = publisher.list_topic_subscriptions(
+                    request={"topic": self.originalTopicPath})
+                endpoints = []
+                for sub in subscriptions:
+                    sub = subscriber.get_subscription(request={"subscription": sub})
+                    if sub.push_config and sub.push_config.push_endpoint:
+                        endpoints.append(sub.push_config.push_endpoint)
+            except PermissionDenied as e:
+                endpoints = None
 
             self.endPoints = endpoints
         return self
