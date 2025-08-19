@@ -16,9 +16,9 @@ def createDeadLetter():
         data = request.get_json()
         if isinstance(data["message"]["data"],str):
              data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])
-        messageId = data["message"]["data"].get('messageId')
-        originalMessage = data["message"]["data"].get('originalMessage')
-        originalTopicPath = data["message"]["data"].get('originalTopicPath')
+        messageId = data["message"]["data"].get('messageId') if isinstance(data['message']['data'], dict) else None
+        originalMessage = data["message"]["data"].get('originalMessage') if isinstance(data['message']['data'], dict) else None
+        originalTopicPath = data["message"]["data"].get('originalTopicPath') if isinstance(data['message']['data'], dict) else None
         originalMessage = data["message"]["data"]
         originalTopicPath=data["message"].get("attributes").get("originalTopicPath")
         messageId = data["message"]["messageId"]

@@ -160,7 +160,7 @@ class Parameters:
             dictName = 'data'
         if kind == 'appPubSub':
             dictName = 'data["message"]["data"]'
-        return "\n".join(f"{pad}{n} = {dictName}.get('{n}')"
+        return "\n".join(f"{pad}{n} = {dictName}.get('{n}') if isinstance(data['message']['data'], dict) else None"
                          for n in self.names) + "\n"
 
     def comma_join(self) -> str:
