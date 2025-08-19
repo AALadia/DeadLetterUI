@@ -23,9 +23,11 @@ def _get_caller_name() -> str:
     # [1] is Pydantic internals, so [2] is your caller.
     return inspect.stack()[3].function
 
+
 def _getIndex():
     data = pubSubMockDb.read({}, AppConfig().projectName)
     return len(data)
+
 
 class Singleton:
     _instance = None
@@ -110,40 +112,24 @@ def createMockData(mockData: MockData, pubSubMockDb: PubSubMockDb) -> MockData:
 
 class PubSub():
 
-    def __init__(self, test=False):
-        # self.topicsDb = mongoDb(None, 'pubSubTopics')
-        self.appConfig = AppConfig()
-        self.projectId = self.appConfig.getProjectId()
-        self.publisher = None
-        self.subscriber = None
-        self.isProductionEnvironment = self.appConfig.getIsProductionEnvironment(
-        )
-        self.test = test
+    def __init__(self, credentials: service_account.Credentials = None):
 
-    def authenticateCredentails(self):
-        # Check if the environment is production or if we're running a test
-        if self.isProductionEnvironment or self.test:
-            if self.test:
-                # Load service account key for testing environment
-                try:
-                    cwd = os.path.dirname(os.path.abspath(__file__))
-                    key_path = os.path.join(cwd, "keys", "starpack-b149d-ea86f6d0c9ec.json")
-                    credentials = service_account.Credentials.from_service_account_file(
-                        key_path)
+        self.isProductionEnvironment = AppConfig().getIsProductionEnvironment()
 
-                    # Create the publisher client with test credentials
-                    self.publisher = pubsub_v1.PublisherClient(
-                        credentials=credentials)
-                    self.subscriber = pubsub_v1.SubscriberClient(
-                        credentials=credentials)
-                except Exception as e:
-                    # Handle the case where loading credentials fails
-                    print(f"Error loading service account credentials: {e}")
-                    raise
-            else:
-                # Use default credentials in production (handled by Cloud Run's service account)
-                self.publisher = pubsub_v1.PublisherClient()
-                self.subscriber = pubsub_v1.SubscriberClient()
+        if credentials is not None and self.isProductionEnvironment:
+            raise Exception(
+                'Cannot use service account credentials in production environment'
+            )
+
+        self.projectId = credentials.project_id
+        # if server is run on development or test we use service account credentials
+        if not self.isProductionEnvironment:
+            self.publisher = pubsub_v1.PublisherClient(credentials=credentials)
+            self.subscriber = pubsub_v1.SubscriberClient(
+                credentials=credentials)
+        else:
+            self.publisher = pubsub_v1.PublisherClient()
+            self.subscriber = pubsub_v1.SubscriberClient()
 
     def _checkIfTopicExists(self, topicName):
         topicPath = self.publisher.topic_path(self.projectId, topicName)
@@ -159,6 +145,7 @@ class PubSub():
         topicName: str = None,
         projectNameConsumers: list[str] = None,
         publishToPubSubMockDb=False,
+        test=False,
     ):
         """Publish a message.
 
@@ -170,27 +157,16 @@ class PubSub():
           message: dict (preferred) or str. Dicts are preserved until serialization boundary.
         """
 
-        if self.isProductionEnvironment and self.test:
-            raise Exception('You cannot run a test in a production environment')
+        if publishToPubSubMockDb and self.isProductionEnvironment:
+            raise Exception(
+                'Cannot publish to Pub/Sub mock database in production environment'
+            )
+        if not isinstance(message, (str, dict)):
+            raise TypeError('message must be str or dict')
 
-        if not isinstance(message, str):
-            message = self.convertToJson(message)
-
-        if self.test or self.isProductionEnvironment:
-            if self.publisher is None:
-                raise Exception('you must authenticate credentials first. Use authenticateCredentails()')
-
-            if not isinstance(message, (str, dict)):
-                raise TypeError('message must be str or dict')
-
-            topicExists = self._checkIfTopicExists(topicName)
-            if not topicExists:
-                print(f"Topic {topicName} does not exist")
-                return {"status": "error", "error": "Topic does not exist"}
-
+        if self.isProductionEnvironment or test:
             topicPath = self.publisher.topic_path(self.projectId, topicName)
             data_bytes = self._serialize_for_pubsub(message)
-            data = message.encode("utf-8")
             attrs = {
                 'originalTopicPath': topicPath,
             }
@@ -200,41 +176,53 @@ class PubSub():
                 return {"status": "success", "messageId": message_id}
             except Exception as e:
                 return {"status": "error", "error": str(e)}
-        if publishToPubSubMockDb:
+        elif publishToPubSubMockDb:
             if projectNameConsumers is None:
-                raise ValueError("projectNameConsumers must be provided when using local Pub/Sub mock.")
-            if not isinstance(message, (str, dict)):
-                raise TypeError('message must be str or dict for mock publish')
+                raise ValueError(
+                    "projectNameConsumers must be provided when using local Pub/Sub mock."
+                )
 
             # create mock payload (store dict as-is; str stays str)
             gmt_plus_8 = datetime.timezone(datetime.timedelta(hours=8))
             now_in_gmt_plus_8 = datetime.datetime.now(gmt_plus_8)
             now_in_utc = now_in_gmt_plus_8.astimezone(datetime.timezone.utc)
-            formatted_datetime = now_in_utc.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            formatted_datetime = now_in_utc.isoformat(
+                timespec='milliseconds').replace('+00:00', 'Z')
+            mockMessageId = generateRandomString()
             req = {
                 'body': {
                     'message': {
-                        'data': message if isinstance(message, dict) else self._maybe_parse_json_string(message),
-                        'messageId': '1234567890',
-                        'message_id': '1234567890',
-                        'publishTime': formatted_datetime,
-                        'publish_time': formatted_datetime
+                        'data':
+                        message,
+                        'messageId':
+                        mockMessageId,
+                        'message_id':
+                        mockMessageId,
+                        'publishTime':
+                        formatted_datetime,
+                        'publish_time':
+                        formatted_datetime
                     }
                 }
             }
             createMockData(
-                MockData(
-                    data=req,
-                    projectNameConsumers=[x.name for x in projectNameConsumers],
-                    consumeFunctionName=topicName,
-                    index=_getIndex(),
-                    type='pubSub'
-                ),
-                pubSubMockDb
-            )
+                MockData(data=req,
+                         projectNameConsumers=[
+                             x.name for x in projectNameConsumers
+                         ],
+                         consumeFunctionName=topicName,
+                         index=_getIndex(),
+                         type='pubSub'), pubSubMockDb)
             return {"status": "mocked", "stored": True}
-
-        return {"status": "noop", "reason": "Neither real publish nor mock requested"}
+        elif not self.isProductionEnvironment:
+            return {
+                "status":
+                "success",
+                "message":
+                "Not published since we are in local dev and publishToMockDb is False"
+            }
+        else:
+            raise Exception("Invalid publish mode")
 
     def _serialize_for_pubsub(self, message: str | dict) -> bytes:
         """Serialize message to bytes for Pub/Sub.
@@ -290,13 +278,27 @@ class PubSub():
 class TestPubSub(PubSub, Singleton):
 
     def __init__(self):
-        super().__init__(test=True)
+        # Use service account credentials for testing
+        cwd = os.getcwd()
+        keyPath = cwd + r'/server/keys/online-store-paperboy-92adc6ce5dc5.json'
+        credentials = service_account.Credentials.from_service_account_file(
+            keyPath)
+        super().__init__(credentials=credentials)
 
 
 class MainPubSub(PubSub, Singleton):
 
     def __init__(self):
-        super().__init__(test=False)
+
+        if not AppConfig().getIsProductionEnvironment():
+            cwd = os.getcwd()
+            keyPath = cwd + r'/server/keys/starpack-b149d-ea86f6d0c9ec.json'
+            credentials = service_account.Credentials.from_service_account_file(
+                keyPath)
+        else:
+            credentials = None
+
+        super().__init__(credentials=credentials)
 
 
 pubSub = MainPubSub()
@@ -332,6 +334,7 @@ def pubSubDecorator(projectNameConsumers: list[AbstractService]):
         return wrapper
 
     return decorator
+
 
 class PubsubMessage(BaseModel):
     """
@@ -401,6 +404,7 @@ class MockDataConsumer(Singleton):
         self.previousIndexConsumed += 1
 
         return {'res': res, 'message': data}
+
 
 mockDataConsumer = MockDataConsumer()
 

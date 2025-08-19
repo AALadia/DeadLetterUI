@@ -16,9 +16,6 @@ class DeadLetterActions():
                           originalTopicPath: str
                          ) -> dict:
 
-        # idempotency check
-        if db.read({'_id': originalMessage['_id']}, 'DeadLetters', findOne=True):
-            return 'data already exists'
 
         deadLetterObject = createDeadLetterObject(
             id=messageId,

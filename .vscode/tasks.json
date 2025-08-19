@@ -25,9 +25,9 @@
       {
         "label": "venv Server app.py",
         "type": "shell",
-        "command": "venv\\Scripts\\activate && python app.py",
+        "command": "server\\venv\\Scripts\\activate && python server\\app.py",
         "options": {
-          "cwd": "${workspaceFolder}\\server",
+          "cwd": "${workspaceFolder}",
           "shell": {
             "executable": "cmd.exe",
             "args": [
