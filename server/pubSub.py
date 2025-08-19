@@ -282,10 +282,13 @@ class TestPubSub(PubSub, Singleton):
 
     def __init__(self):
         # Use service account credentials for testing
-        cwd = os.getcwd()
-        keyPath = cwd + r'/server/keys/online-store-paperboy-92adc6ce5dc5.json'
-        credentials = service_account.Credentials.from_service_account_file(
-            keyPath)
+        if not AppConfig().getIsProductionEnvironment():
+            cwd = os.getcwd()
+            keyPath = cwd + r'/server/keys/online-store-paperboy-92adc6ce5dc5.json'
+            credentials = service_account.Credentials.from_service_account_file(
+                keyPath)
+        else:
+            credentials= None
         super().__init__(credentials=credentials)
 
 
