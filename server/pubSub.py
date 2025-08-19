@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field, field_validator, field_serializer
 import base64
 import datetime
 from typing import Dict, Optional
+import google.auth
 
 
 def _get_caller_name() -> str:
@@ -121,15 +122,17 @@ class PubSub():
                 'Cannot use service account credentials in production environment'
             )
 
-        self.projectId = credentials.project_id
         # if server is run on development or test we use service account credentials
         if not self.isProductionEnvironment:
+            self.projectId = credentials.project_id
             self.publisher = pubsub_v1.PublisherClient(credentials=credentials)
             self.subscriber = pubsub_v1.SubscriberClient(
                 credentials=credentials)
         else:
-            self.publisher = pubsub_v1.PublisherClient()
-            self.subscriber = pubsub_v1.SubscriberClient()
+            credentials, project_id = google.auth.default()
+            self.publisher = pubsub_v1.PublisherClient(credentials=credentials)
+            self.subscriber = pubsub_v1.SubscriberClient(credentials=credentials)
+            self.projectId = project_id
 
     def _checkIfTopicExists(self, topicName):
         topicPath = self.publisher.topic_path(self.projectId, topicName)
