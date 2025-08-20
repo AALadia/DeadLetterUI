@@ -6,8 +6,9 @@ class Project:
     def __init__(self):
         self.projectName = 'deadLetterUi'
         self.projectId = os.getenv('GOOGLE_CLOUD_PROJECT_ID')
-        self.approverUsers = []
-        self.approverThreshold = 0
+
+    def getProjectId(self):
+        return self.projectId
 
 
 class MongoDb(Project):
@@ -18,9 +19,6 @@ class MongoDb(Project):
 
     def getDatabaseName(self):
         return self.databaseName
-
-    def getUseReplicaSet(self):
-        return self.useReplicaSet
 
 
 class Timezone:
@@ -63,30 +61,12 @@ class Environment:
         return self.getEnvironment() in ['localdev', 'clouddev']
 
 
-class PubSubConfig(Project):
-
-    def __init__(self):
-        super().__init__()
-        # Pub/Sub settings
-        self.PROJECT_ID = self.projectId
-        # setting runLocalPubSub to True or False. If set to true the pubsub will make
-        # a request to another local server that the user specified in the function to
-        # mock the pubsub. If set to false the pubsub will skip this step.
-        # THIS IS USED FOR TESTING PURPOSES
-
-        self.runLocalPubSub = os.getenv('runLocalPubSub')
-        if self.runLocalPubSub.lower() not in ['true', 'false']:
-            raise Exception("Invalid runLocalPubSub")
-        if self.runLocalPubSub.lower() == 'true':
-            self.runLocalPubSub = True
-        elif self.runLocalPubSub.lower() == 'false':
-            self.runLocalPubSub = False
-
-    def getProjectId(self):
-        return self.PROJECT_ID
 
 
-class AppConfig(Environment, PubSubConfig, Timezone, MongoDb):
+ 
+
+
+class AppConfig(Environment, Timezone, MongoDb):
 
     def __init__(self):
         super().__init__()
