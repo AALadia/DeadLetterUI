@@ -3,7 +3,7 @@ import logging
 from mongoDb import mongoDb, db
 from PubSubRequests import PubSubRequests
 import traceback
-from pubSub import PubSub
+from pubSub import decodeMessage
 
 main = Blueprint('main', __name__)
 logging.basicConfig(level=logging.INFO)
@@ -15,7 +15,7 @@ def createDeadLetter():
     if request.is_json:
         data = request.get_json()
         if isinstance(data["message"]["data"],str):
-             data["message"]["data"] = PubSub().decodeMessage(data["message"]["data"])
+             data["message"]["data"] = decodeMessage(data["message"]["data"])
         messageId = data["message"]["data"].get('messageId') if isinstance(data['message']['data'], dict) else None
         originalMessage = data["message"]["data"].get('originalMessage') if isinstance(data['message']['data'], dict) else None
         originalTopicPath = data["message"]["data"].get('originalTopicPath') if isinstance(data['message']['data'], dict) else None

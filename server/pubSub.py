@@ -263,19 +263,19 @@ class PubSub():
         res = json.dumps(message, default=customSerializer)
         return res
 
-    def decodeMessage(self, message):
-        # Step 1: Decode the base64-encoded message
-        decoded_message = base64.b64decode(message).decode('utf-8')
+def decodeMessage(message):
+    # Step 1: Decode the base64-encoded message
+    decoded_message = base64.b64decode(message).decode('utf-8')
 
-        # Step 2: Try to convert the decoded message to a JSON object
-        try:
-            # If it's a JSON string, convert it to a dictionary
-            decoded_message = json.loads(decoded_message)
-        except json.JSONDecodeError:
-            # If it's not a JSON, keep the string as is
-            pass
+    # Step 2: Try to convert the decoded message to a JSON object
+    try:
+        # If it's a JSON string, convert it to a dictionary
+        decoded_message = json.loads(decoded_message)
+    except json.JSONDecodeError:
+        # If it's not a JSON, keep the string as is
+        pass
 
-        return decoded_message
+    return decoded_message
 
 
 class TestPubSub(PubSub, Singleton):
