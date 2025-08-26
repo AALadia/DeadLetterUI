@@ -21,8 +21,8 @@ type AppContextType = {
   snackbarMessage: string | null;
   setSnackbarMessage: (message: string | null) => void;
   snackbarType: 'success' | 'error';
-  localEndpointUrl: string | null;
-  setLocalEndpointUrl: (url: string | null) => void;
+  localEndpointBaseUrl: string | null;
+  setLocalEndpointBaseUrl: (url: string | null) => void;
 };
 
 type ServerResponseType = {
@@ -79,7 +79,7 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
   // STATES
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [localEndpointUrl, setLocalEndpointUrl] = useState<string | null>(null);
+  const [localEndpointBaseUrl, setLocalEndpointBaseUrl] = useState<string | null>(null);
 
   // ROUTER
   const router = useRouter();
@@ -97,8 +97,8 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
     snackbarMessage,
     setSnackbarMessage,
     snackbarType,
-    localEndpointUrl,
-    setLocalEndpointUrl
+    localEndpointBaseUrl,
+    setLocalEndpointBaseUrl
   };
 
   return (

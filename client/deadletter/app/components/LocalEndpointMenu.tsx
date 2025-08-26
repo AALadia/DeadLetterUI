@@ -27,7 +27,7 @@ const computeIsLocal = () => {
 export const LocalEndpointMenu: React.FC = () => {
   const [statusMsg, setStatusMsg] = useState<string>('');
   const [show, setShow] = useState(false);
-  const { localEndpointUrl, setLocalEndpointUrl } = useAppContext();
+  const { localEndpointBaseUrl, setLocalEndpointBaseUrl } = useAppContext();
 
   // Decide visibility after mount
   useEffect(() => {
@@ -37,19 +37,19 @@ export const LocalEndpointMenu: React.FC = () => {
   // Persist the debug URL in localStorage (quality-of-life)
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (localEndpointUrl) {
-      localStorage.setItem('debugLocalEndpointUrl', localEndpointUrl);
+    if (localEndpointBaseUrl) {
+      localStorage.setItem('debugLocalEndpointBaseUrl', localEndpointBaseUrl);
     } else {
-      localStorage.removeItem('debugLocalEndpointUrl');
+      localStorage.removeItem('debugLocalEndpointBaseUrl');
     }
-  }, [localEndpointUrl]);
+  }, [localEndpointBaseUrl]);
 
   // Load from storage on first mount if context empty
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!localEndpointUrl) {
-      const stored = localStorage.getItem('debugLocalEndpointUrl');
-      if (stored) setLocalEndpointUrl(stored);
+    if (!localEndpointBaseUrl) {
+      const stored = localStorage.getItem('debugLocalEndpointBaseUrl');
+      if (stored) setLocalEndpointBaseUrl(stored);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -73,7 +73,7 @@ export const LocalEndpointMenu: React.FC = () => {
   };
 
   const handleChange = (val: string) => {
-    setLocalEndpointUrl(val);
+    setLocalEndpointBaseUrl(val);
     const err = validateUrl(val);
     setStatusMsg(err ? err : '');
   };
@@ -95,7 +95,7 @@ export const LocalEndpointMenu: React.FC = () => {
           id="debug-base-url"
           type="text"
             // Show placeholder distinctly if empty
-          value={localEndpointUrl ?? ''}
+          value={localEndpointBaseUrl ?? ''}
           onChange={(e) => handleChange(e.target.value.trimStart())}
           placeholder="http://localhost:3000/"
           spellCheck={false}
@@ -112,10 +112,10 @@ export const LocalEndpointMenu: React.FC = () => {
         <p className="text-[10px]" style={{ color: 'var(--color-text-subtle,#6b7280)' }}>
           Local only. Validation: protocol (http/https) + trailing slash.
         </p>
-        {localEndpointUrl && !statusMsg && (
+        {localEndpointBaseUrl && !statusMsg && (
           <span className="badge badge-neutral text-[10px]">Active</span>
         )}
-        {!localEndpointUrl && (
+        {!localEndpointBaseUrl && (
           <span className="badge badge-soft text-[10px]">Not Set</span>
         )}
         <button
