@@ -27,9 +27,9 @@ logging.basicConfig(level=logging.INFO)
 def setUserRole():
     if request.is_json:
         data = request.get_json()
-        userIdToChangeRole = data.get('userIdToChangeRole') if isinstance(data['message']['data'], dict) else None
-        userType = data.get('userType') if isinstance(data['message']['data'], dict) else None
-        userId = data.get('userId') if isinstance(data['message']['data'], dict) else None
+        userIdToChangeRole = data.get('userIdToChangeRole')
+        userType = data.get('userType')
+        userId = data.get('userId')
         current_user = get_jwt_identity()
     try:
         res = ApiRequests().setUserRole(userIdToChangeRole, userType, userId)
@@ -45,10 +45,10 @@ def setUserRole():
 def setSpecificRoles():
     if request.is_json:
         data = request.get_json()
-        userIdToChangeRole = data.get('userIdToChangeRole') if isinstance(data['message']['data'], dict) else None
-        roleId = data.get('roleId') if isinstance(data['message']['data'], dict) else None
-        value = data.get('value') if isinstance(data['message']['data'], dict) else None
-        userId = data.get('userId') if isinstance(data['message']['data'], dict) else None
+        userIdToChangeRole = data.get('userIdToChangeRole')
+        roleId = data.get('roleId')
+        value = data.get('value')
+        userId = data.get('userId')
         current_user = get_jwt_identity()
     try:
         res = ApiRequests().setSpecificRoles(userIdToChangeRole, roleId, value, userId)
@@ -64,7 +64,7 @@ def setSpecificRoles():
 def fetchUserList():
     if request.is_json:
         data = request.get_json()
-        projection = data.get('projection') if isinstance(data['message']['data'], dict) else None
+        projection = data.get('projection')
         current_user = get_jwt_identity()
     try:
         res = ApiRequests().fetchUserList(projection)
@@ -80,10 +80,10 @@ def fetchUserList():
 def replayDeadLetter():
     if request.is_json:
         data = request.get_json()
-        deadLetterId = data.get('deadLetterId') if isinstance(data['message']['data'], dict) else None
-        localOrProd = data.get('localOrProd') if isinstance(data['message']['data'], dict) else None
-        localEndpoint = data.get('localEndpoint') if isinstance(data['message']['data'], dict) else None
-        userId = data.get('userId') if isinstance(data['message']['data'], dict) else None
+        deadLetterId = data.get('deadLetterId')
+        localOrProd = data.get('localOrProd')
+        localEndpoint = data.get('localEndpoint')
+        userId = data.get('userId')
         current_user = get_jwt_identity()
     try:
         res = ApiRequests().replayDeadLetter(deadLetterId, localOrProd, localEndpoint, userId)
@@ -99,8 +99,8 @@ def replayDeadLetter():
 def closeDeadLetter():
     if request.is_json:
         data = request.get_json()
-        deadLetterId = data.get('deadLetterId') if isinstance(data['message']['data'], dict) else None
-        userId = data.get('userId') if isinstance(data['message']['data'], dict) else None
+        deadLetterId = data.get('deadLetterId')
+        userId = data.get('userId')
         current_user = get_jwt_identity()
     try:
         res = ApiRequests().closeDeadLetter(deadLetterId, userId)
@@ -116,7 +116,7 @@ def closeDeadLetter():
 def listDeadLetters():
     if request.is_json:
         data = request.get_json()
-        projection = data.get('projection') if isinstance(data['message']['data'], dict) else None
+        projection = data.get('projection')
         current_user = get_jwt_identity()
     try:
         res = ApiRequests().listDeadLetters(projection)
@@ -132,7 +132,7 @@ def listDeadLetters():
 def loginWithGoogle():
     if request.is_json:
         data = request.get_json()
-        firebaseUserObject = data.get('firebaseUserObject') if isinstance(data['message']['data'], dict) else None
+        firebaseUserObject = data.get('firebaseUserObject')
     try:
         res = ApiRequests().loginWithGoogle(firebaseUserObject)
         access_token = create_access_token(identity=res["_id"])
@@ -148,7 +148,7 @@ def loginWithGoogle():
 def mockPost():
     if request.is_json:
         data = request.get_json()
-        message = data.get('message') if isinstance(data['message']['data'], dict) else None
+        message = data.get('message')
     try:
         res = ApiRequests().mockPost(message)
     except Exception as e:
