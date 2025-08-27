@@ -16,7 +16,7 @@ export const DeadLetterTable = () => {
   const { user, showSnackbar, localEndpointBaseUrl } = useAppContext();
   const [openObjectViewer, setOpenObjectViewer] = useState<boolean>(false);
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
-  const [localEndpointDropdown, setLocalEndpointDropdown] = useState<boolean>(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const loadDeadLetters = async () => {
     setLoading(true);
@@ -63,10 +63,10 @@ export const DeadLetterTable = () => {
     }
   };
 
-  const toggleMockMenu = () => {
-    setLocalEndpointDropdown(!localEndpointDropdown);
-  };
+  const toggleMockMenu = (rowId: string) => {
+    setOpenDropdownId(prev => (prev === rowId ? null : rowId));
 
+  };
 
   const handleEndpointSelect = (id: string, option: string) => {
 
@@ -75,9 +75,7 @@ export const DeadLetterTable = () => {
       return
     }
 
-    // For now we simply trigger the local retry. If you want this option
-    // sent to the server, we can extend the API to include it.
-    setLocalEndpointDropdown(false);
+  setOpenDropdownId(null);
     console.log('Selected mock option', option, 'for id', id);
 
     const localApiEndpoint = `${localEndpointBaseUrl}${option}`;
@@ -137,13 +135,15 @@ export const DeadLetterTable = () => {
                     <div className="relative inline-block">
                       <button
                         className="btn btn-secondary"
-                        onClick={() => toggleMockMenu()}
+                        onClick={() => toggleMockMenu(item._id)}
                         disabled={item.status === 'success'}
-                        title="Retry against localhost (choose mock data)"
+                        title="Retry against localhost (choose endpoint)"
                         aria-haspopup="menu"
-                        aria-expanded={localEndpointDropdown === true}
-                      >Local ▾</button>
-                      {localEndpointDropdown ?
+                        aria-expanded={openDropdownId === item._id}
+                      >
+                        Local ▾
+                      </button>
+                      {openDropdownId === item._id ? (
                         <div
                           role="menu"
                           className="absolute z-50 mt-1 min-w-[160px] max-h-60 overflow-auto rounded-md right-0 top-full"
@@ -155,23 +155,21 @@ export const DeadLetterTable = () => {
                           }}
                         >
                           {(((item.endPoints ?? []) as Array<string>)).map(opt => {
-
                             const { service, endpoint } = parseServiceAndEndpoint(opt);
-
                             if (!service || !endpoint) return null;
-
-                            return (<button
-                              key={opt}
-                              role="menuitem"
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-[rgba(0,0,0,0.04)]"
-                              onClick={() => handleEndpointSelect(item._id, endpoint)}
-                            >
-                              {service}/{endpoint}
-                            </button>)
+                            return (
+                              <button
+                                key={opt}
+                                role="menuitem"
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-[rgba(0,0,0,0.04)]"
+                                onClick={() => handleEndpointSelect(item._id, endpoint)}
+                              >
+                                {service}/{endpoint}
+                              </button>
+                            );
                           })}
                         </div>
-                        : null}
-
+                      ) : null}
                     </div>
                   </div>
                 </td>
