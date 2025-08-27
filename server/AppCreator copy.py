@@ -31,11 +31,11 @@ def _compute_project_root(start: Path) -> Path:
         cur = cur.parent
 
 
-PORT: int = 2222
+PORT: int = 5000
 PROJECT_ROOT: Path = _compute_project_root(Path(__file__).resolve().parent)
 SERVER_DIR: Path = PROJECT_ROOT / 'server'
 CLIENT_DIR: Path = PROJECT_ROOT / 'client'
-CLIENT_APP_DIR: Path = CLIENT_DIR / 'deadletter'
+CLIENT_APP_DIR: Path = CLIENT_DIR / 'src'
 CLIENT_APP_DIR: Path = CLIENT_APP_DIR / 'app'
 CLIENT_SCHEMAS_DIR: Path = CLIENT_APP_DIR / 'schemas'
 SERVER_SCHEMAS_DIR: Path = SERVER_DIR / 'schemas'
@@ -197,7 +197,7 @@ class AppCreator:
         'from flask import Blueprint, jsonify, request', 'import logging',
         'from mongoDb import mongoDb, db',
         'from PubSubRequests import PubSubRequests', 'import traceback',
-        'from pubSub import decodeMessage'
+        'from pubSub import PubSub, decodeMessage'
     ]
 
     APP_FLASK_CONFIG = [
