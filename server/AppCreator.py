@@ -155,16 +155,11 @@ class Parameters:
     def as_assignment_block(self, indent: int = 8, kind: str = 'app') -> str:
         if not self.names:
             return ""
+        if kind == 'appPubSub':
+            return ''
         pad = " " * indent
         if kind == 'app':
             dictName = 'data'
-        if kind == 'appPubSub':
-            dictName = 'data["message"]["data"]'
-        if kind == 'appPubSub':
-            return "\n".join(
-                f"{pad}{n} = {dictName}.get('{n}') if isinstance(data['message']['data'], dict) else None"
-                for n in self.names) + "\n"
-        if kind == 'app':
             return "\n".join(f"{pad}{n} = {dictName}.get('{n}')"
                              for n in self.names) + "\n"
 
