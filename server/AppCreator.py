@@ -270,7 +270,7 @@ class AppCreator:
         sig = inspect.signature(func)
         result: Dict[str, Any] = {}
         for name, param in sig.parameters.items():
-            if name == 'self':
+            if name in ['self','publishToPubSubMockDb','publishToProdPubSub']:
                 continue
             ann = param.annotation
             if ann is inspect._empty:
