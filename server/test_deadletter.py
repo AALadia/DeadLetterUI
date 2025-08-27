@@ -24,7 +24,7 @@ def test_deadLetter():
 
     initiallyLoaded = False
     retryCount = 0
-    while True:
+    while True: 
         retryCount += 1
         if initiallyLoaded == False:
             print('WAITING 2 minutes for message to flow to dead letter service database')
