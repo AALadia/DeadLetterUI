@@ -123,8 +123,9 @@ class DeadLetterActions():
                 '_version': deadLetter.version
             }, deadLetter.model_dump(by_alias=True), 'DeadLetters')
 
-        if deadLetter['status'] == "failed":
-            raise ValueError("Dead letter processing failed. Debug the service that failed.")
+        if localOrProd == 'prod':
+            if deadLetter['status'] == "failed":
+                raise ValueError("Dead letter processing failed. Debug the service that failed.")
 
         return deadLetter
 
