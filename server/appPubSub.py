@@ -25,7 +25,7 @@ def createDeadLetter():
         if db.read({"_id": messageId},"PubSubMessages",findOne=True):
             return jsonify({"message": "Message already processed","status":200,"data":None,"currentUser":None}), 200
     try:
-        res = PubSubRequests().createDeadLetter(originalMessage)
+        res = PubSubRequests().createDeadLetter(messageId, originalMessage, originalTopicPath)
     except Exception as e:
         traceback.print_exc()
         return jsonify({'message': str(e),'data':None,'status':400}), 400

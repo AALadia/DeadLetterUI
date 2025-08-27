@@ -347,7 +347,10 @@ if __name__ == '__main__':
         if kind == 'app':
             body_call = f"{className}().{name}({params.comma_join()})" if params.names else f"{className}().{name}(data)"
         if kind == 'appPubSub':
-            body_call = f"{className}().{name}({"originalMessage"})"
+            if name == 'createDeadLetter':
+                body_call = f"{className}().{name}({params.comma_join()})" if params.names else f"{className}().{name}(data)"
+            else:
+                body_call = f"{className}().{name}({"originalMessage"})"
 
         return f"""
 @{atFunction}.route('/{name}', methods=['{meta['httpMethod']}'])
