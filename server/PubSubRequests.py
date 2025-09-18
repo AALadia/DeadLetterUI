@@ -5,6 +5,8 @@ from emailSender import send_mail
 from functions import _getAllUsersToSendDeadLetterCreationEmail
 import json
 from pubSubPublisherAndSubscriber import publisher
+from ApiRequests import DeadLetterActions as _DeadLetterActions
+from functions import _replayDeadLetter
 
 
 class DeadLetterActions():
@@ -93,11 +95,15 @@ class DeadLetterActions():
         res = db.create(deadLetterObject.model_dump(by_alias=True),
                         'DeadLetters')
 
-        if recipient_emails:
-            try:
-                send_mail(recipient_emails, subject, html_email)
-            except Exception as e:
-                print(f"Failed to send notification email(s): {e}")
+        #we try to retry to produce an error message 
+        try:
+            _replayDeadLetter(messageId,'prod',None,'superAdmin')
+        except:
+            if recipient_emails:
+                try:
+                    send_mail(recipient_emails, subject, html_email)
+                except Exception as e:
+                    print(f"Failed to send notification email(s): {e}")
 
         return res
 

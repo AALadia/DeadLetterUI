@@ -5,7 +5,7 @@ from route_config import route_config
 from utils import generateRandomString
 from objects import User, DeadLetter
 from builderObjects import createDeadLetterObject
-from functions import retryMessage
+from functions import retryMessage,_replayDeadLetter
 from AppConfig import AppConfig
 
 
@@ -99,35 +99,7 @@ class DeadLetterActions():
     def replayDeadLetter(self, deadLetterId: str, localOrProd: Literal['local',
                                                                        'prod'], localEndpoint: str | None,
                          userId: str) -> dict:
-        if localEndpoint == '':
-            localEndpoint = None
-        
-        # Optional runtime guard (useful because Literal is not enforced at runtime)
-        if localOrProd not in ('local', 'prod'):
-            raise ValueError("localOrProd must be either 'local' or 'prod'")
-
-        if localOrProd == 'local' and localEndpoint is None:
-            raise ValueError("localEndpoint must be provided when clicking 'Retry Local'")
-
-        if localOrProd == 'prod' and localEndpoint is not None:
-            raise ValueError("localEndpoint should not be provided when clicking 'Retry Prod'")
-
-        deadLetter = db.read({'_id': deadLetterId},
-                             'DeadLetters',
-                             findOne=True)
-        deadLetter = DeadLetter(**deadLetter)
-        deadLetter = retryMessage(deadLetter,localOrProd,localEndpoint)
-        deadLetter = db.update(
-            {
-                '_id': deadLetter.id,
-                '_version': deadLetter.version
-            }, deadLetter.model_dump(by_alias=True), 'DeadLetters')
-
-        if localOrProd == 'prod':
-            if deadLetter['status'] == "failed":
-                raise ValueError("Dead letter processing failed. Debug the service that failed.")
-
-        return deadLetter
+        return _replayDeadLetter(deadLetterId, localOrProd, localEndpoint)
 
     @route_config(httpMethod='POST',
                   jwtRequired=True,
