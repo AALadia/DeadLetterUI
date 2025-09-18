@@ -97,7 +97,7 @@ class DeadLetterActions():
 
         #we try to retry to produce an error message 
         try:
-            _replayDeadLetter(messageId,'prod',None,'superAdmin')
+            _replayDeadLetter(messageId,'prod',None)
         except:
             if recipient_emails:
                 try:
