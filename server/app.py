@@ -191,6 +191,22 @@ def replayDevDataMessage():
 
     return jsonify({"message": "Dev message replayed successfully","status":200, "current_user": current_user, "data": res}), 200
 
+
+@app.route('/deleteAllDevDataMessages', methods=['POST'])
+@jwt_required()
+def deleteAllDevDataMessages():
+    if request.is_json:
+        data = request.get_json()
+        userId = data.get('userId')
+        current_user = get_jwt_identity()
+    try:
+        res = ApiRequests().deleteAllDevDataMessages(userId)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'message': str(e),'data':None,'status':400}), 400
+
+    return jsonify({"message": "All dev data messages deleted successfully","status":200, "current_user": current_user, "data": res}), 200
+
 if __name__ == '__main__':
     if (AppConfig().getIsDevEnvironment()):
         print(f"[92m_______________________{AppConfig().getEnvironment().upper()}_______________________[0m")

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useAppContext } from "../contexts/AppContext";
 import serverRequests from "../_lib/serverRequests";
 import { DevData } from "../schemas/DevDataSchema";
+import { ObjectViewerModal } from "./ObjectViewerModal";
 
 export const DevDataTable: React.FC = () => {
   const { user, showSnackbar, localEndpointBaseUrl } = useAppContext();
@@ -10,6 +11,9 @@ export const DevDataTable: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [openObjectViewer, setOpenObjectViewer] = useState<boolean>(false);
+  const [selectedJson, setSelectedJson] = useState<any>(null);
+  const [deletingAll, setDeletingAll] = useState<boolean>(false);
 
   const loadDevData = async () => {
     setLoading(true);
@@ -29,6 +33,18 @@ export const DevDataTable: React.FC = () => {
   useEffect(() => {
     if (user) loadDevData();
   }, [user]);
+  const handleDeleteAll = async () => {
+    if (!user?._id) return;
+    const confirmed = typeof window !== 'undefined' ? window.confirm('Delete ALL dev data messages? This cannot be undone.') : true;
+    if (!confirmed) return;
+    setDeletingAll(true);
+    const res = await serverRequests.deleteAllDevDataMessages(user._id);
+    showSnackbar(res, 4000);
+    setDeletingAll(false);
+    if (res.status === 200) {
+      await loadDevData();
+    }
+  };
 
   const handleRetry = async (id: string,projectName:string) => {
     if (!localEndpointBaseUrl) {
@@ -48,6 +64,20 @@ export const DevDataTable: React.FC = () => {
 
   return (
     <div className="overflow-x-auto mt-6 w-full surface-card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold" style={{ color: 'var(--color-text-strong,#1f2937)' }}>Dev Data Messages</h2>
+        <div className="flex gap-2">
+          <button
+            className="btn btn-ghost"
+            style={{ color: 'var(--danger,#dc2626)', border: '1px solid var(--danger,#dc2626)' }}
+            onClick={handleDeleteAll}
+            disabled={deletingAll || devData.length === 0}
+            title="Delete all dev data messages"
+          >
+            {deletingAll ? 'Deleting…' : 'Delete All'}
+          </button>
+        </div>
+      </div>
       <table className="table-modern">
         <thead>
           <tr>
@@ -64,7 +94,15 @@ export const DevDataTable: React.FC = () => {
               <td className="mono text-xs max-w-[160px] truncate" title={item._id}>{item._id}</td>
               <td className="whitespace-nowrap text-xs opacity-80">{item.createdAt ? new Date(item.createdAt).toLocaleString() : "-"}</td>
               <td className="text-xs">{item.fromProject}</td>
-              <td className="max-w-xs text-xs truncate" title={JSON.stringify(item.data)}>{JSON.stringify(item.data)}</td>
+              <td className="max-w-xs">
+                <a
+                  onClick={() => { setOpenObjectViewer(true); setSelectedJson(item.data); }}
+                  className="text-[var(--accent)] truncate block overflow-hidden whitespace-nowrap hover:underline cursor-pointer text-xs"
+                  title={JSON.stringify(item.data)}
+                >
+                  {JSON.stringify(item.data)}
+                </a>
+              </td>
               <td>
                 <button
                   className="btn btn-secondary"
@@ -84,6 +122,11 @@ export const DevDataTable: React.FC = () => {
           )}
         </tbody>
       </table>
+      <ObjectViewerModal
+        open={openObjectViewer}
+        onClose={() => setOpenObjectViewer(false)}
+        data={selectedJson}
+      />
     </div>
   );
 };

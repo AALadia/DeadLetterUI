@@ -213,6 +213,20 @@ class DevDataMessages():
                                     payload)
         return res
 
+    @route_config(
+        httpMethod='POST',
+        jwtRequired=True,
+        successMessage='All dev data messages deleted successfully',
+    )
+    def deleteAllDevDataMessages(self, userId: str) -> None:
+        devDataCollections = [
+            x for x in pubSubMockDb.getAllCollectionNames()
+            if x[-8:] == '_devData'
+        ]
+        for x in devDataCollections:
+            pubSubMockDb.delete({}, x)
+
+        return
 
 class MockServerForTesting():
 
