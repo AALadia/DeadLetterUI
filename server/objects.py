@@ -55,7 +55,13 @@ class User(BaseModel):
             raise ValueError(
                 AllRoles().getSpecificRole(roleId).unauthorizedMessage)
 
-
+class DevData(BaseModel):
+    id: str = Field(..., alias='_id')
+    data: dict = Field(..., description='Data field')
+    createdAt: datetime.datetime = Field(..., description='Creation date')
+    fromProject: str = Field(..., description='From Project ID')
+    projectConsumers: list[str] = Field(default_factory=list,
+                               description='List of consumer project IDs')
 class DeadLetter(BaseModel):
     id: str = Field(...,
                     description="Unique ID of the failed message",

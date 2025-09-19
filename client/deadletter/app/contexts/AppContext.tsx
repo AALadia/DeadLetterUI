@@ -2,7 +2,7 @@
 
 import { createContext, useState, useContext, ReactNode, useEffect, use } from 'react';
 import { User } from '../schemas/UserSchema';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { initializeApp } from "firebase/app";
 import getFirebaseKey from '../_utils/getFirebaseKey';
 import { getAuth,onAuthStateChanged } from 'firebase/auth';
@@ -42,6 +42,7 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
     }
   const firebaseApp = initializeApp(getFirebaseKey(firebaseApiKey));
   const firebaseAuth = getAuth(firebaseApp);
+  const pathname = usePathname();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
@@ -51,7 +52,11 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
             console.log('User data from server:', userData);
             setUser(userData.data);
             localStorage.setItem('access_token', userData?.access_token || '');
-            router.push('/deadLetterDashboard'); // Redirect to dashboard after login
+            // Redirect only when coming from landing/login pages. If already on
+            // a specific app route (e.g., /devDataDashboard), stay there.
+            if (pathname === '/' || pathname === '/login' || pathname === '/index') {
+              router.push('/deadLetterDashboard');
+            }
           })
       } else {
         // User is signed out
@@ -61,7 +66,7 @@ export const AppProvider = ({ children,firebaseApiKey }: { children: ReactNode,f
       }
     });
     return () => unsubscribe()
-    }, [firebaseAuth]);
+  }, [firebaseAuth, pathname]);
 
   // SNACKBAR
   const [openSnackBar,setOpenSnackbar] = useState(false)

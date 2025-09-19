@@ -1,12 +1,11 @@
 from typing import List, Literal
 import datetime
-from mongoDb import db
+from mongoDb import db, pubSubMockDb
 from route_config import route_config
-from utils import generateRandomString
-from objects import User, DeadLetter
-from builderObjects import createDeadLetterObject
-from functions import retryMessage,_replayDeadLetter
-from AppConfig import AppConfig
+from objects import User, DeadLetter, DevData
+from functions import _replayDeadLetter
+from ServerRequest import ServerRequest
+import json
 
 
 class AuthActions():
@@ -97,8 +96,8 @@ class DeadLetterActions():
                   successMessage='Dead letter message replayed successfully',
                   roleAccess='canReplayDeadLetter')
     def replayDeadLetter(self, deadLetterId: str, localOrProd: Literal['local',
-                                                                       'prod'], localEndpoint: str | None,
-                         userId: str) -> dict:
+                                                                       'prod'],
+                         localEndpoint: str | None, userId: str) -> dict:
         return _replayDeadLetter(deadLetterId, localOrProd, localEndpoint)
 
     @route_config(httpMethod='POST',
@@ -127,11 +126,75 @@ class DeadLetterActions():
                         projection: dict | None = None) -> List[DeadLetter]:
         """Fetch a list of dead letters with optional filter and projection."""
 
-        deadLetters = db.read({'status': 'failed',"originalMessage.isTestForAppDoNotDelete": { "$exists": False }},
-                              'DeadLetters',
-                              projection=projection)
+        deadLetters = db.read(
+            {
+                'status': 'failed',
+                "originalMessage.isTestForAppDoNotDelete": {
+                    "$exists": False
+                }
+            },
+            'DeadLetters',
+            projection=projection)
         return deadLetters
 
+
+class DevDataMessages():
+
+    @route_config(
+        httpMethod='POST',
+        jwtRequired=True,
+        successMessage='Dev message read successfully',
+    )
+    def getDevDataMessages(self, userId: str) -> list:
+
+        devDataMessage = []
+
+        devDataCollections = [
+            x for x in pubSubMockDb.getAllCollectionNames()
+            if x[-8:] == '_devData'
+        ]
+        for x in devDataCollections:
+            messages = pubSubMockDb.read({}, x)
+            for m in messages:
+                obj = DevData(_id=m['_id'],
+                              data=m['data'],
+                              createdAt=m['dateOfCreation'],
+                              fromProject=m['projectName'],
+                              projectConsumers=m['projectNameConsumers'])
+                devDataMessage.append(obj.model_dump(by_alias=True))
+
+        return devDataMessage
+
+    @route_config(
+        httpMethod='POST',
+        jwtRequired=True,
+        successMessage='Dev message replayed successfully',
+    )
+    def replayDevDataMessage(self, devDataId: str, endpoint: str,
+                             projectName: str) -> None:
+        devData = pubSubMockDb.read({'_id': devDataId},
+                                    projectName + '_devData',
+                                    findOne=True)
+        if not devData:
+            raise ValueError("DevData not found")
+        # convert to json with support for datetime and other non-JSON types
+        def _json_default(o):
+            if isinstance(o, (datetime.datetime, datetime.date)):
+                try:
+                    return o.isoformat()
+                except Exception:
+                    return str(o)
+            # Fallback string conversion for unexpected objects
+            return str(o)
+
+        devData_json = json.dumps(devData['data'], default=_json_default)
+        # Logic to replay the DevData message
+        res = ServerRequest(serverBaseUrl=endpoint,
+                            headers={
+                                "Content-Type": "application/json"
+                            }).post(devData['consumeFunctionName'],
+                                    devData_json)
+        return res
 
 
 class MockServerForTesting():
@@ -147,13 +210,14 @@ class MockServerForTesting():
 
 
 class ApiRequests(UserActions, DeadLetterActions, AuthActions,
-                  MockServerForTesting):
+                  MockServerForTesting, DevDataMessages):
 
     def __init__(self):
         UserActions.__init__(self)
         DeadLetterActions.__init__(self)
         MockServerForTesting.__init__(self)
         AuthActions.__init__(self)
+        DevDataMessages.__init__(self)
 
 
 if __name__ == '__main__':
@@ -163,7 +227,8 @@ if __name__ == '__main__':
     # api = ApiRequests()
     # print(api.loginWithEmailAndPassword.createAccessToken)
 
-    api = ApiRequests()
+    res = ApiRequests().getDevDataMessages()
+    print(res)
     # unit = db.read({'_id': 'unit1'}, 'Units', findOne=True)
     # entry = EntryUnit(quantity=10, unit=Unit(**unit))
     # order = {

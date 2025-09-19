@@ -1,3 +1,5 @@
+'use client';
+
 import { useAppContext } from '../contexts/AppContext';
 import LogoutButton from '../auth/LogoutButton';
 

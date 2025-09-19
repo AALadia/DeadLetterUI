@@ -1,0 +1,42 @@
+{
+    "properties": {
+        "_id": {
+            "title": "Id",
+            "type": "string"
+        },
+        "data": {
+            "additionalProperties": true,
+            "description": "Data field",
+            "title": "Data",
+            "type": "object"
+        },
+        "createdAt": {
+            "description": "Creation date",
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+        },
+        "fromProject": {
+            "description": "From Project ID",
+            "title": "Fromproject",
+            "type": "string"
+        },
+        "projectConsumers": {
+            "description": "List of consumer project IDs",
+            "items": {
+                "type": "string"
+            },
+            "title": "Projectconsumers",
+            "type": "array"
+        }
+    },
+    "required": [
+        "_id",
+        "data",
+        "createdAt",
+        "fromProject"
+    ],
+    "title": "DevData",
+    "type": "object",
+    "additionalProperties": false
+}

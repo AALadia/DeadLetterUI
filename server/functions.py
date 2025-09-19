@@ -9,6 +9,12 @@ from pubSubPublisherAndSubscriber import subscriber
 from mongoDb import db
 from typing import Literal
 
+def _replayDevDataMessage(devDataId: str, endpoint: str) -> None:
+    devData = db.read({'_id': devDataId}, 'DevData', findOne=True)
+    if not devData:
+        raise ValueError("DevData not found")
+    retryMessage()
+    # Logic to replay the DevData message
 
 def _replayDeadLetter(deadLetterId: str, localOrProd: Literal['local',
                                                                        'prod'], localEndpoint: str | None,
@@ -42,6 +48,8 @@ def _replayDeadLetter(deadLetterId: str, localOrProd: Literal['local',
                 raise ValueError("Dead letter processing failed. Debug the service that failed.")
 
         return deadLetter
+
+
 def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod'],localEndpoint: str | None):
     deadLetter.retryMessage()
 

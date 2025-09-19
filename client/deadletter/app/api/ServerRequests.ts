@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Server from "./Server";
 import type { Id, Messageid, Version, Retrycount, Status, Createdat, Lasttriedat, Publisherprojectid, Endpoints, Errormessage, Originaltopicpath, DeadLetter, Originalmessage } from '../schemas/DeadLetterSchema.ts';
+import type { Fromproject, Projectconsumers, DevData, Data } from '../schemas/DevDataSchema.ts';
 import type { Name, Email, Password, Id1, Value, Description, Collectionstransacted, Unauthorizedmessage, UserRoles, Usertype, User, Role } from '../schemas/UserSchema.ts';
 
     class ServerRequests extends Server {
@@ -158,6 +159,46 @@ import type { Name, Email, Password, Id1, Value, Description, Collectionstransac
             
             },
             body: JSON.stringify({"message": message}),
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        
+        return data;
+        } catch (error) {
+            console.error("Error:", error);
+            return {"message": "Failed to fetch data", "error": error};
+        }
+    }
+
+    async getDevDataMessages(userId: string): Promise<any> {
+        try {
+        const res = await fetch(`${this.apiUrl}/getDevDataMessages`, {
+            method: 'POST',
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify({"userId": userId}),
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        
+        return data;
+        } catch (error) {
+            console.error("Error:", error);
+            return {"message": "Failed to fetch data", "error": error};
+        }
+    }
+
+    async replayDevDataMessage(devDataId: string, endpoint: string, projectName: string): Promise<any> {
+        try {
+        const res = await fetch(`${this.apiUrl}/replayDevDataMessage`, {
+            method: 'POST',
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify({"devDataId": devDataId, "endpoint": endpoint, "projectName": projectName}),
             cache: 'no-store'
         });
         const data = await res.json();
