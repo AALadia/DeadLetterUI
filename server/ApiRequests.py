@@ -1,3 +1,4 @@
+import base64
 from typing import List, Literal
 import datetime
 from mongoDb import db, pubSubMockDb
@@ -189,11 +190,27 @@ class DevDataMessages():
 
         devData_json = json.dumps(devData['data'], default=_json_default)
         # Logic to replay the DevData message
+
+        # Encode to UTF-8, then Base64, then ASCII string
+        data_b64 = base64.b64encode(
+            devData_json.encode("utf-8")).decode("ascii")
+
+        payload = {
+            "message": {
+                "data": data_b64,
+                "messageId" : None,
+                "attributes" : {
+                    "originalTopicPath": None,
+                }
+            },
+            "subscription": ""
+        }
+
         res = ServerRequest(serverBaseUrl=endpoint,
                             headers={
                                 "Content-Type": "application/json"
                             }).post(devData['consumeFunctionName'],
-                                    devData_json)
+                                    payload)
         return res
 
 
