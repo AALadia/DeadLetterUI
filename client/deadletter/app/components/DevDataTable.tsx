@@ -92,7 +92,7 @@ export const DevDataTable: React.FC = () => {
           {devData.map((item) => (
             <tr key={item._id}>
               <td className="mono text-xs max-w-[160px] truncate" title={item._id}>{item._id}</td>
-              <td className="whitespace-nowrap text-xs opacity-80">{item.createdAt ? new Date(item.createdAt).toLocaleString() : "-"}</td>
+              <td className="whitespace-nowrap text-xs opacity-80">{item.createdAt ? item.createdAt : "-"}</td>
               <td className="text-xs">{item.fromProject}</td>
               <td className="max-w-xs">
                 <a
