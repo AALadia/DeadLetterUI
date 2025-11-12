@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import serverRequests from '../_lib/serverRequests';
 import { useAppContext } from '../contexts/AppContext';
 import { ObjectViewerModal } from "./ObjectViewerModal";
-import { DeadLetter } from '../schemas/DeadLetterSchema';
+import { DeadLetter, Originaltopicpath } from '../schemas/DeadLetterSchema';
 import { parseServiceAndEndpoint } from '../_utils/parseServiceAndEndpoint';
 
 
@@ -87,6 +87,12 @@ export const DeadLetterTable = () => {
   if (loading) return <div>Loading dead letters...</div>;
   if (error) return <div className="text-red-600 text-sm">{error}</div>;
 
+  function getTopicNameFromPath(topicPath:Originaltopicpath|undefined):string|undefined {
+  if (!topicPath) return undefined;
+  const parts = topicPath.split('/');
+  return parts[parts.length - 1];
+  }
+
   return (
     <div className="overflow-y mt-6 w-full surface-card p-4 h-3/4">
       <table className="table-modern">
@@ -106,7 +112,7 @@ export const DeadLetterTable = () => {
             const statusClass = item.status === 'success' ? 'badge-success' : item.status === 'pending' ? 'badge-pending' : 'badge-failed';
             return (
               <tr key={item._id}>
-                <td className="mono text-xs max-w-[160px] truncate" title={item.originalTopicPath || ''}>{item.originalTopicPath || '-'}</td>
+                <td className="mono text-xs max-w-[160px] truncate" title={getTopicNameFromPath(item.originalTopicPath) || ''}>{getTopicNameFromPath(item.originalTopicPath) || '-'}</td>
                 <td className="whitespace-nowrap text-xs opacity-80">{item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
                 <td className="max-w-xs">
                   <a
