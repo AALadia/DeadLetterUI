@@ -98,6 +98,7 @@ export const DeadLetterTable = () => {
       <table className="table-modern">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Topic</th>
             <th>Created At</th>
             <th>Message</th>
@@ -112,6 +113,7 @@ export const DeadLetterTable = () => {
             const statusClass = item.status === 'success' ? 'badge-success' : item.status === 'pending' ? 'badge-pending' : 'badge-failed';
             return (
               <tr key={item._id}>
+                <td className="mono text-xs" title={item._id}>{item._id}</td>
                 <td className="mono text-xs max-w-[160px] truncate" title={getTopicNameFromPath(item.originalTopicPath) || ''}>{getTopicNameFromPath(item.originalTopicPath) || '-'}</td>
                 <td className="whitespace-nowrap text-xs opacity-80">{item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
                 <td className="max-w-xs">
@@ -184,7 +186,7 @@ export const DeadLetterTable = () => {
           })}
           {deadLetters.length === 0 && (
             <tr>
-              <td colSpan={8} className="p-6 text-center text-sm opacity-60">No dead letters found.</td>
+              <td colSpan={9} className="p-6 text-center text-sm opacity-60">No dead letters found.</td>
             </tr>
           )}
         </tbody>
