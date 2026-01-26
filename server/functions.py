@@ -9,6 +9,7 @@ from pubSubPublisherAndSubscriber import subscriber
 from mongoDb import db
 from typing import Literal
 
+
 def _replayDevDataMessage(devDataId: str, endpoint: str) -> None:
     devData = db.read({'_id': devDataId}, 'DevData', findOne=True)
     if not devData:
@@ -16,48 +17,57 @@ def _replayDevDataMessage(devDataId: str, endpoint: str) -> None:
     retryMessage()
     # Logic to replay the DevData message
 
-def _replayDeadLetter(deadLetterId: str, localOrProd: Literal['local',
-                                                                       'prod'], localEndpoint: str | None,
-                         ) -> dict:
-        if localEndpoint == '':
-            localEndpoint = None
-        
-        # Optional runtime guard (useful because Literal is not enforced at runtime)
-        if localOrProd not in ('local', 'prod'):
-            raise ValueError("localOrProd must be either 'local' or 'prod'")
 
-        if localOrProd == 'local' and localEndpoint is None:
-            raise ValueError("localEndpoint must be provided when clicking 'Retry Local'")
+def _replayDeadLetter(
+    deadLetterId: str,
+    localOrProd: Literal['local', 'prod'],
+    localEndpoint: str | None,
+) -> dict:
+    if localEndpoint == '':
+        localEndpoint = None
 
-        if localOrProd == 'prod' and localEndpoint is not None:
-            raise ValueError("localEndpoint should not be provided when clicking 'Retry Prod'")
+    # Optional runtime guard (useful because Literal is not enforced at runtime)
+    if localOrProd not in ('local', 'prod'):
+        raise ValueError("localOrProd must be either 'local' or 'prod'")
 
-        deadLetter = db.read({'_id': deadLetterId},
-                             'DeadLetters',
-                             findOne=True)
-        deadLetter = DeadLetter(**deadLetter)
-        deadLetter = retryMessage(deadLetter,localOrProd,localEndpoint)
-        deadLetter = db.update(
-            {
-                '_id': deadLetter.id,
-                '_version': deadLetter.version
-            }, deadLetter.model_dump(by_alias=True), 'DeadLetters')
+    if localOrProd == 'local' and localEndpoint is None:
+        raise ValueError(
+            "localEndpoint must be provided when clicking 'Retry Local'")
 
-        if localOrProd == 'prod':
-            if deadLetter['status'] == "failed":
-                raise ValueError("Dead letter processing failed. Debug the service that failed.")
+    if localOrProd == 'prod' and localEndpoint is not None:
+        raise ValueError(
+            "localEndpoint should not be provided when clicking 'Retry Prod'")
 
-        return deadLetter
+    deadLetter = db.read({'_id': deadLetterId}, 'DeadLetters', findOne=True)
+    deadLetter = DeadLetter(**deadLetter)
+    deadLetter = retryMessage(deadLetter, localOrProd, localEndpoint)
+    deadLetter = db.update(
+        {
+            '_id': deadLetter.id,
+            '_version': deadLetter.version
+        }, deadLetter.model_dump(by_alias=True), 'DeadLetters')
+
+    if localOrProd == 'prod':
+        if deadLetter['status'] == "failed":
+            raise ValueError(
+                "Dead letter processing failed. Debug the service that failed."
+            )
+
+    return deadLetter
 
 
-def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod'],localEndpoint: str | None):
+def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local', 'prod'],
+                 localEndpoint: str | None):
     deadLetter.retryMessage()
 
     successfulEndpoints = []
     errors = []
 
-    if deadLetter.endPoints is None:
-        raise ValueError("Endpoints is None. Please update the dead letter object in MongoDB and update the key endPoints : list[str]. To prevent this from happening again check the pubSub publish message function and add the key originalTopicPath to the attributes of the message.")
+    if localOrProd == 'prod':
+        if deadLetter.endPoints is None:
+            raise ValueError(
+                "Endpoints is None. Please update the dead letter object in MongoDB and update the key endPoints : list[str]. To prevent this from happening again check the pubSub publish message function and add the key originalTopicPath to the attributes of the message."
+            )
 
     # we use localEndpoint if provided
     if localEndpoint is not None:
@@ -66,14 +76,14 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod'],lo
         endPoints = deadLetter.endPoints
 
     for endPoint in endPoints:
-        base_url, last_segment = split_url_and_last_segment(
-            endPoint)
-        serverRequest = ServerRequest(serverBaseUrl=base_url,
-                                    headers={"Content-Type": "application/json"})
+        base_url, last_segment = split_url_and_last_segment(endPoint)
+        serverRequest = ServerRequest(
+            serverBaseUrl=base_url,
+            headers={"Content-Type": "application/json"})
         # convert to utf8 original message
         original_json = json.dumps(deadLetter.originalMessage,
-                                ensure_ascii=False,
-                                separators=(",", ":"))
+                                   ensure_ascii=False,
+                                   separators=(",", ":"))
         # Encode to UTF-8, then Base64, then ASCII string
         data_b64 = base64.b64encode(
             original_json.encode("utf-8")).decode("ascii")
@@ -81,8 +91,8 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local','prod'],lo
         payload = {
             "message": {
                 "data": data_b64,
-                "messageId" : deadLetter.messageId,
-                "attributes" : {
+                "messageId": deadLetter.messageId,
+                "attributes": {
                     "originalTopicPath": deadLetter.originalTopicPath,
                 }
             },
@@ -121,13 +131,14 @@ def _getAllUsersToSendDeadLetterCreationEmail() -> list[User]:
     }
 
     # Attempt common patterns of db.read. Adjust if your db wrapper differs.
-    users = db.read(query,'Users')  # preferred: collection first
+    users = db.read(query, 'Users')  # preferred: collection first
 
     toReturn = []
     for x in users:
         toReturn.append(User(**x))
 
     return toReturn
+
 
 if __name__ == "__main__":
     # Example usage

@@ -134,3 +134,4 @@ class DeadLetter(BaseModel):
     def markAsFailed(self, errorMessage) -> None:
         self.status = "failed"
         self.errorMessage = errorMessage
+

@@ -17,6 +17,16 @@ export const DeadLetterTable = () => {
   const [openObjectViewer, setOpenObjectViewer] = useState<boolean>(false);
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [manualEndpointModal, setManualEndpointModal] = useState<{ open: boolean; deadLetterId: string | null }>({ open: false, deadLetterId: null });
+  const [manualEndpointValue, setManualEndpointValue] = useState<string>('');
+
+  // Load saved manual endpoint from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('manualLocalEndpoint');
+      if (saved) setManualEndpointValue(saved);
+    }
+  }, []);
 
   const loadDeadLetters = async () => {
     setLoading(true);
@@ -81,6 +91,42 @@ export const DeadLetterTable = () => {
     const localApiEndpoint = `${localEndpointBaseUrl}${option}`;
     console.log('Local API endpoint:', localApiEndpoint);
     void handleRetry(id, 'local', localApiEndpoint);
+  };
+
+  const handleManualEndpointOpen = (id: string) => {
+    setOpenDropdownId(null);
+    // Load saved value from localStorage when opening modal
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('manualLocalEndpoint');
+      setManualEndpointValue(saved || '');
+    }
+    setManualEndpointModal({ open: true, deadLetterId: id });
+  };
+
+  const handleManualEndpointSubmit = () => {
+    if (!manualEndpointModal.deadLetterId || !manualEndpointValue.trim()) {
+      showSnackbar({ status: 400, message: 'Please enter a valid endpoint.' });
+      return;
+    }
+    const endpoint = manualEndpointValue.trim();
+    // Save to localStorage for next time
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('manualLocalEndpoint', endpoint);
+    }
+    // If the endpoint starts with http, use it as-is; otherwise prepend the base URL
+    let localApiEndpoint: string;
+    if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+      localApiEndpoint = endpoint;
+    } else {
+      if (localEndpointBaseUrl === null) {
+        showSnackbar({ status: 400, message: 'Please set a valid Local Endpoint URL in the menu above, or enter a full URL.' });
+        return;
+      }
+      localApiEndpoint = `${localEndpointBaseUrl}${endpoint.startsWith('/') ? endpoint.slice(1) : endpoint}`;
+    }
+    console.log('Manual local API endpoint:', localApiEndpoint);
+    void handleRetry(manualEndpointModal.deadLetterId, 'local', localApiEndpoint);
+    setManualEndpointModal({ open: false, deadLetterId: null });
   };
 
   if (!user) return <div className="mt-6 text-sm">Please log in to view dead letters.</div>;
@@ -176,6 +222,15 @@ export const DeadLetterTable = () => {
                               </button>
                             );
                           })}
+                          <hr className="my-1 border-t" style={{ borderColor: 'var(--border-color)' }} />
+                          <button
+                            role="menuitem"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-[rgba(0,0,0,0.04)] italic"
+                            style={{ color: 'var(--accent)' }}
+                            onClick={() => handleManualEndpointOpen(item._id)}
+                          >
+                            Manually Enter Local Endpoint
+                          </button>
                         </div>
                       ) : null}
                     </div>
@@ -196,6 +251,49 @@ export const DeadLetterTable = () => {
         onClose={() => setOpenObjectViewer(false)}
         data={selectedMessage}
       />
+      {/* Manual Endpoint Entry Modal */}
+      {manualEndpointModal.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.4)' }}
+          onClick={() => setManualEndpointModal({ open: false, deadLetterId: null })}
+        >
+          <div
+            className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border-color)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">Enter Local Endpoint</h3>
+            <p className="text-sm mb-3 opacity-70">
+              Enter an endpoint path (e.g., <code>api/test</code>) or a full URL (e.g., <code>http://localhost:3000/api/test</code>).
+            </p>
+            <input
+              type="text"
+              value={manualEndpointValue}
+              onChange={(e) => setManualEndpointValue(e.target.value)}
+              placeholder="api/endpoint or http://localhost:3000/api/endpoint"
+              className="w-full px-3 py-2 rounded border text-sm mb-4"
+              style={{ borderColor: 'var(--border-color)', background: 'var(--surface-alt, #fff)' }}
+              autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter') handleManualEndpointSubmit(); }}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setManualEndpointModal({ open: false, deadLetterId: null })}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleManualEndpointSubmit}
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
