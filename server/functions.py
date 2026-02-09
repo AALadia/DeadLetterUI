@@ -50,7 +50,7 @@ def _replayDeadLetter(
     if localOrProd == 'prod':
         if deadLetter['status'] == "failed":
             raise ValueError(
-                "Dead letter processing failed. Debug the service that failed."
+                deadLetter['errorMessage']
             )
 
     return deadLetter
@@ -108,11 +108,11 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local', 'prod'],
         if len(successfulEndpoints) == len(deadLetter.endPoints):
             if localOrProd == 'prod':
                 deadLetter.markAsSuccess()
-    else:
-        errorString = ''
-        for x in errors:
-            errorString += f" - {x[0]}: {x[1]}\n"
-        deadLetter.markAsFailed(errorString)
+        else:
+            errorString = ''
+            for x in errors:
+                errorString += f" - {x[0]}: {x[1]}\n"
+            deadLetter.markAsFailed(errorString)
 
     return deadLetter
 
