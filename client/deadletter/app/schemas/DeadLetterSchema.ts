@@ -43,6 +43,18 @@ export type Endpoints = string[] | null;
  */
 export type Errormessage = string | null;
 /**
+ * traceback for debugging
+ */
+export type Traceback = string | null;
+/**
+ * The service endpoint that produced the error
+ */
+export type Serviceendpoint = string | null;
+/**
+ * List of service error messages
+ */
+export type Serviceerrormessage = ServiceErrorMessage[];
+/**
  * Original topic path for the message
  */
 export type Originaltopicpath = string | null;
@@ -59,11 +71,17 @@ export interface DeadLetter {
   publisherProjectId?: Publisherprojectid;
   endPoints?: Endpoints;
   errorMessage?: Errormessage;
+  serviceErrorMessage?: Serviceerrormessage;
   originalTopicPath?: Originaltopicpath;
 }
 /**
  * The original message payload that failed
  */
 export interface Originalmessage {
+  [k: string]: unknown;
+}
+export interface ServiceErrorMessage {
+  traceback?: Traceback;
+  serviceEndpoint?: Serviceendpoint;
   [k: string]: unknown;
 }

@@ -16,9 +16,14 @@ class ServerRequest:
                                      json=payload,
                                      headers=self.headers,
                                      timeout=5)
-            response.raise_for_status(
-            )  # Raises an HTTPError for bad responses
+            response.raise_for_status()
             return response.json()
+        except requests.exceptions.HTTPError as e:
+            try:
+                body = response.json()
+                server_tb = body.get('traceback', '')
+            except Exception:
+                pass
+            raise ValueError(server_tb)
         except Exception as e:
-            tb = traceback.format_exc()
-            raise ValueError(f"{str(e)}\nTraceback:\n{tb}")
+            raise ValueError(str(e))

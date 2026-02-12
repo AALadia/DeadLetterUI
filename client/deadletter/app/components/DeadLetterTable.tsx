@@ -18,6 +18,7 @@ export const DeadLetterTable = () => {
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [manualEndpointModal, setManualEndpointModal] = useState<{ open: boolean; deadLetterId: string | null }>({ open: false, deadLetterId: null });
+  const [errorMessageModal, setErrorMessageModal] = useState<DeadLetter | null>(null);
   const [manualEndpointValue, setManualEndpointValue] = useState<string>('');
 
   // Load saved manual endpoint from localStorage on mount
@@ -148,7 +149,7 @@ export const DeadLetterTable = () => {
             <th>Topic</th>
             <th>Created At</th>
             <th>Message</th>
-            <th>Error Message</th>
+            <th>Project Errors</th>
             <th>Status</th>
             <th>Retries</th>
             <th>Actions</th>
@@ -172,7 +173,14 @@ export const DeadLetterTable = () => {
                   </a>
                 </td>
                 <td className="max-w-xs text-xs">
-                  <span className="text-[var(--danger)]" title={item.errorMessage || ''}>{item.errorMessage}</span>
+                  {item.serviceErrorMessage && item.serviceErrorMessage.length > 0 ? (
+                    <span
+                      className="text-[var(--danger)] cursor-pointer hover:underline"
+                      onClick={() => setErrorMessageModal(item)}
+                    >
+                      {item.serviceErrorMessage.length} {item.serviceErrorMessage.length === 1 ? 'error' : 'errors'}
+                    </span>
+                  ) : null}
                 </td>
                 <td>
                   <span className={`badge ${statusClass}`}>{item.status}</span>
@@ -289,6 +297,65 @@ export const DeadLetterTable = () => {
                 onClick={handleManualEndpointSubmit}
               >
                 Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Project Errors Modal */}
+      {errorMessageModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.4)' }}
+          onClick={() => setErrorMessageModal(null)}
+        >
+          <div
+            className="rounded-lg shadow-lg p-6 w-[90vw] h-[90vh] flex flex-col"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border-color)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 shrink-0">
+              <h3 className="text-lg font-semibold">Project Errors</h3>
+            </div>
+            <div className="overflow-auto flex-1 flex flex-col gap-3">
+              {errorMessageModal.serviceErrorMessage?.map((err, idx) => (
+                <div key={idx}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>
+                      {err.serviceEndpoint || 'Unknown endpoint'}
+                    </div>
+                    <button
+                      className="text-xs text-[var(--accent)] hover:underline"
+                      onClick={async () => {
+                        const text = [
+                          `Endpoint: ${err.serviceEndpoint || 'Unknown'}`,
+                          `Topic: ${errorMessageModal.originalTopicPath || 'Unknown'}`,
+                          '',
+                          'Original Message:',
+                          JSON.stringify(errorMessageModal.originalMessage, null, 2),
+                          '',
+                          'Traceback:',
+                          err.traceback || 'No traceback',
+                        ].join('\n');
+                        await navigator.clipboard.writeText(text);
+                        showSnackbar({ status: 200, message: 'Copied error context to clipboard' });
+                      }}
+                    >
+                      Copy Context
+                    </button>
+                  </div>
+                  <pre
+                    className="text-sm mono whitespace-pre-wrap break-words p-3 rounded"
+                    style={{ background: 'var(--surface-alt)', border: '1px solid var(--border-color)', color: 'var(--danger)' }}
+                  >
+                    {err.traceback || 'No traceback'}
+                  </pre>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end mt-4 shrink-0">
+              <button className="btn btn-primary" onClick={() => setErrorMessageModal(null)}>
+                Close
               </button>
             </div>
           </div>

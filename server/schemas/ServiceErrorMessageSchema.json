@@ -1,0 +1,33 @@
+{
+    "properties": {
+        "traceback": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "description": "traceback for debugging",
+            "title": "Traceback"
+        },
+        "serviceEndpoint": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "description": "The service endpoint that produced the error",
+            "title": "Serviceendpoint"
+        }
+    },
+    "title": "ServiceErrorMessage",
+    "type": "object",
+    "additionalProperties": false
+}

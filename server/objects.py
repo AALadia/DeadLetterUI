@@ -55,13 +55,22 @@ class User(BaseModel):
             raise ValueError(
                 AllRoles().getSpecificRole(roleId).unauthorizedMessage)
 
+
 class DevData(BaseModel):
     id: str = Field(..., alias='_id')
     data: dict = Field(..., description='Data field')
     createdAt: datetime.datetime = Field(..., description='Creation date')
     fromProject: str = Field(..., description='From Project ID')
-    projectConsumers: list[str] = Field(default_factory=list,
-                               description='List of consumer project IDs')
+    projectConsumers: list[str] = Field(
+        default_factory=list, description='List of consumer project IDs')
+
+
+class ServiceErrorMessage(BaseModel):
+    traceback: str | None = Field(None, description='traceback for debugging')
+    serviceEndpoint: str | None = Field(
+        None, description='The service endpoint that produced the error')
+
+
 class DeadLetter(BaseModel):
     id: str = Field(...,
                     description="Unique ID of the failed message",
@@ -80,12 +89,14 @@ class DeadLetter(BaseModel):
         description="When the dead letter was created")
     lastTriedAt: datetime.datetime | None = Field(
         default=None, description="When it was last retried")
-    publisherProjectId: str | None = Field(None,
-                                    description="Project ID of the publisher")
+    publisherProjectId: str | None = Field(
+        None, description="Project ID of the publisher")
     endPoints: list[str] | None = Field(
         None, description="Endpoint URL for the subscription")
     errorMessage: str | None = Field(
         None, description="Error message if retry failed")
+    serviceErrorMessage: list[ServiceErrorMessage] = Field(
+        default_factory=list, description="List of service error messages")
     originalTopicPath: str | None = Field(
         None, description="Original topic path for the message")
 
@@ -97,26 +108,28 @@ class DeadLetter(BaseModel):
 
     @model_validator(mode='after')
     def setPublisherProjectId(self) -> 'DeadLetter':
-        
+
         # sometimes the publisher forgets to add attribute of originalTopicPath
-        # we still want to be able to create the dead letter but disables some 
+        # we still want to be able to create the dead letter but disables some
         # features of the app. They have to manually input the endpoint if they
-        # forget this because we cant get the subscription endpoints if we dont 
+        # forget this because we cant get the subscription endpoints if we dont
         # have the original topic path.
         if self.originalTopicPath is None:
             return self
 
         split = self.originalTopicPath.split('/')
         self.publisherProjectId = split[1]
-        
+
         if self.endPoints is None:
             try:
-                project_publisher, project_subscriber = get_clients_for_project(self.publisherProjectId)
+                project_publisher, project_subscriber = get_clients_for_project(
+                    self.publisherProjectId)
                 subscriptions = project_publisher.list_topic_subscriptions(
                     request={"topic": self.originalTopicPath})
                 endpoints = []
                 for sub in subscriptions:
-                    sub = project_subscriber.get_subscription(request={"subscription": sub})
+                    sub = project_subscriber.get_subscription(
+                        request={"subscription": sub})
                     if sub.push_config and sub.push_config.push_endpoint:
                         endpoints.append(sub.push_config.push_endpoint)
             except PermissionDenied as e:
@@ -132,7 +145,9 @@ class DeadLetter(BaseModel):
     def markAsSuccess(self) -> None:
         self.status = "success"
 
-    def markAsFailed(self, errorMessage) -> None:
+    def markAsFailed(
+            self, errorMessage,
+            listServiceErrorMessage: list[ServiceErrorMessage]) -> None:
         self.status = "failed"
         self.errorMessage = errorMessage
-
+        self.serviceErrorMessage.extend(listServiceErrorMessage)

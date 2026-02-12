@@ -1,5 +1,5 @@
 import base64
-from objects import DeadLetter, User
+from objects import DeadLetter, User, ServiceErrorMessage
 
 from ServerRequest import ServerRequest
 from utils import split_url_and_last_segment
@@ -49,9 +49,7 @@ def _replayDeadLetter(
 
     if localOrProd == 'prod':
         if deadLetter['status'] == "failed":
-            raise ValueError(
-                deadLetter['errorMessage']
-            )
+            raise ValueError(deadLetter['errorMessage'])
 
     return deadLetter
 
@@ -62,6 +60,7 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local', 'prod'],
 
     successfulEndpoints = []
     errors = []
+    serviceErrorMessages = []
 
     if localOrProd == 'prod':
         if deadLetter.endPoints is None:
@@ -103,6 +102,9 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local', 'prod'],
             successfulEndpoints.append(endPoint)
         except Exception as e:
             errors.append((endPoint, str(e)))
+            serviceErrorMessages.append(
+                ServiceErrorMessage(traceback=str(e),
+                                    serviceEndpoint=endPoint))
 
     if deadLetter.endPoints is not None:
         if len(successfulEndpoints) == len(deadLetter.endPoints):
@@ -112,7 +114,7 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local', 'prod'],
             errorString = ''
             for x in errors:
                 errorString += f" - {x[0]}: {x[1]}\n"
-            deadLetter.markAsFailed(errorString)
+            deadLetter.markAsFailed(errorString, serviceErrorMessages)
 
     return deadLetter
 

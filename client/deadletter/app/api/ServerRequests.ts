@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Server from "./Server";
-import type { Id, Messageid, Version, Retrycount, Status, Createdat, Lasttriedat, Publisherprojectid, Endpoints, Errormessage, Originaltopicpath, DeadLetter, Originalmessage } from '../schemas/DeadLetterSchema.ts';
+import type { Id, Messageid, Version, Retrycount, Status, Createdat, Lasttriedat, Publisherprojectid, Endpoints, Errormessage, Traceback, Serviceendpoint, Serviceerrormessage, Originaltopicpath, DeadLetter, Originalmessage, ServiceErrorMessage } from '../schemas/DeadLetterSchema.ts';
 import type { Fromproject, Projectconsumers, DevData, Data } from '../schemas/DevDataSchema.ts';
 import type { Name, Email, Password, Id1, Value, Description, Collectionstransacted, Unauthorizedmessage, UserRoles, Usertype, User, Role } from '../schemas/UserSchema.ts';
 

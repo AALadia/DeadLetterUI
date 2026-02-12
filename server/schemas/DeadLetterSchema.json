@@ -1,4 +1,38 @@
 {
+    "$defs": {
+        "ServiceErrorMessage": {
+            "properties": {
+                "traceback": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "traceback for debugging",
+                    "title": "Traceback"
+                },
+                "serviceEndpoint": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "The service endpoint that produced the error",
+                    "title": "Serviceendpoint"
+                }
+            },
+            "title": "ServiceErrorMessage",
+            "type": "object"
+        }
+    },
     "properties": {
         "_id": {
             "description": "Unique ID of the failed message",
@@ -99,6 +133,14 @@
             "default": null,
             "description": "Error message if retry failed",
             "title": "Errormessage"
+        },
+        "serviceErrorMessage": {
+            "description": "List of service error messages",
+            "items": {
+                "$ref": "#/$defs/ServiceErrorMessage"
+            },
+            "title": "Serviceerrormessage",
+            "type": "array"
         },
         "originalTopicPath": {
             "anyOf": [
