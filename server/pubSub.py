@@ -284,7 +284,7 @@ class TestPubSub(PubSub, Singleton):
         # Use service account credentials for testing
         if not AppConfig().getIsProductionEnvironment():
             cwd = os.getcwd()
-            keyPath = cwd + r'/server/keys/online-store-paperboy-92adc6ce5dc5.json'
+            keyPath = cwd + r'/server/online-store-paperboy-92adc6ce5dc5.json'
             credentials = service_account.Credentials.from_service_account_file(
                 keyPath)
         else:

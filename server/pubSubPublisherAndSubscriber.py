@@ -7,7 +7,7 @@ cwd = os.path.dirname(os.path.abspath(__file__))
 
 # Load the online-store-paperboy key directly
 _ONLINE_STORE_KEY_PATH = os.path.join(
-    cwd, "keys", "online-store-paperboy-92adc6ce5dc5.json")
+    cwd, "online-store-paperboy-92adc6ce5dc5.json")
 with open(_ONLINE_STORE_KEY_PATH) as f:
     _ONLINE_STORE_KEY_DATA = json.load(f)
 
