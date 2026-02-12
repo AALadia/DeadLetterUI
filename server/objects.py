@@ -4,7 +4,7 @@ from roles import UserRoles, RoleSetter, AllRoles
 import datetime
 from utils import updateData
 from pydantic_core import Url
-from pubSubPublisherAndSubscriber import publisher, subscriber
+from pubSubPublisherAndSubscriber import publisher, subscriber, get_clients_for_project
 from google.api_core.exceptions import PermissionDenied
 
 
@@ -111,11 +111,12 @@ class DeadLetter(BaseModel):
         
         if self.endPoints is None:
             try:
-                subscriptions = publisher.list_topic_subscriptions(
+                project_publisher, project_subscriber = get_clients_for_project(self.publisherProjectId)
+                subscriptions = project_publisher.list_topic_subscriptions(
                     request={"topic": self.originalTopicPath})
                 endpoints = []
                 for sub in subscriptions:
-                    sub = subscriber.get_subscription(request={"subscription": sub})
+                    sub = project_subscriber.get_subscription(request={"subscription": sub})
                     if sub.push_config and sub.push_config.push_endpoint:
                         endpoints.append(sub.push_config.push_endpoint)
             except PermissionDenied as e:
