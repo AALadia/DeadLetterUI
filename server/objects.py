@@ -125,6 +125,7 @@ class DeadLetter(BaseModel):
                     if sub.push_config and sub.push_config.push_endpoint:
                         endpoints.append(sub.push_config.push_endpoint)
             except PermissionDenied as e:
+                print(e)
                 endpoints = None
 
             self.endPoints = endpoints
