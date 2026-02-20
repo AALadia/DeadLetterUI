@@ -19,9 +19,10 @@ class ServerRequest:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
+            server_tb = str(e)
             try:
                 body = response.json()
-                server_tb = body.get('traceback', '')
+                server_tb = body.get('traceback', str(e))
             except Exception:
                 pass
             raise ValueError(server_tb)
