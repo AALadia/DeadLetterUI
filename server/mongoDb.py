@@ -228,90 +228,42 @@ class mongoDb():
         print('Updating data in collection: ' + collection_name +
               ' with query: ' + str(query))
 
-        if collection_name not in self.db.list_collection_names():
-            raise ValueError('Collection does not exist: ' +
-                                collection_name)
-        
+        # Build the filter for find_one_and_update
         if checkVersion:
-            latestData = self.db[collection_name].find_one(
-                {
-                    '_id': query['_id'],
-                    '_version': query['_version']
-                },
-                session=session)
-            if latestData is None:
+            update_filter = {
+                '_id': query['_id'],
+                '_version': query['_version']
+            }
+        else:
+            update_filter = {'_id': query['_id']}
+
+        # Build the update operation - use a copy to avoid mutating caller's dict
+        set_values = {k: v for k, v in new_values.items() if k != '_version'} if incrementVersion else dict(new_values)
+        update_op = {'$set': set_values}
+        if incrementVersion:
+            update_op['$inc'] = {'_version': 1}
+
+        start_time = time.time()
+
+        updatedData = self.db[collection_name].find_one_and_update(
+            update_filter,
+            update_op,
+            return_document=ReturnDocument.AFTER,
+            session=session)
+
+        end_time = time.time()
+        elapsed_time_ms = (end_time - start_time) * 1000
+        print(collection_name + " update Response time: %f ms" %
+              elapsed_time_ms)
+
+        if updatedData is None:
+            if checkVersion:
                 raise Exception(
                     'Your data is outdated. Please refresh the page and try again.'
                 )
-        else:
-            latestData = self.db[collection_name].find_one(
-                {'_id': query['_id']}, session=session)
-
-        newVersion = latestData['_version'] + 1
-        oldVersion = newVersion - 1
-        new_values['_version'] = newVersion
-
-        # we update the query with the new version
-        if checkVersion == True:
-            query['_version'] = oldVersion
-        else:
-            if '_version' in query:
-                query.pop('_version')
-
-        def find_instance(d, o, path=""):
-            if isinstance(d, dict):
-                for key, value in d.items():
-                    current_path = f"{path}.{key}" if path else key  # Construct the current path
-
-                    if isinstance(value, dict):
-                        # Recursively check nested dictionaries
-                        found, instance_path = find_instance(
-                            value, o, current_path)
-                        if found:
-                            print('object detected', instance_path)
-                    elif isinstance(value, list):
-                        # Recursively check nested lists
-                        for i, item in enumerate(value):
-                            found, instance_path = find_instance(
-                                item, o, f"{current_path}[{i}]")
-                            if found:
-                                print('object detected', instance_path)
-                    elif isinstance(value, o):
-                        # Return True and the path if a value is an instance of the specified class
-                        print('object detected', current_path)
-
-            elif isinstance(d, list):
-                for i, item in enumerate(d):
-                    found, instance_path = find_instance(
-                        item, o, f"{path}[{i}]")
-                    if found:
-                        print('object detected', instance_path)
-
-            # Return False and an empty string if no instance of the class is found
-            return False, ""
-
-        # from objects import Unit
-        # find_instance(new_values, Unit)
-
-        if incrementVersion == False:
-            new_values.pop('_version')
-
-        result = self.db[collection_name].update_many(query, {
-            '$set': new_values,
-        },
-                                                      session=session)
-
-        if incrementVersion == True:
-            if result.modified_count == 0:
+            else:
                 raise ValueError("No documents were modified.")
 
-        if checkVersion == True:
-            query.pop('_version')
-
-        updatedData = self.read(query,
-                                collection_name,
-                                session=session,
-                                findOne=True)
         return updatedData
 
     def delete(self, query, collection_name, session=None):
