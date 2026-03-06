@@ -316,7 +316,7 @@ if __name__ == '__main__':
         parameters_code = params.as_assignment_block(indent=8, kind=kind)
         decode_message = '        if isinstance(data["message"]["data"],str):\n             data["message"]["data"] = decodeMessage(data["message"]["data"])\n' if kind == 'appPubSub' else ''
         pubSubAttributes = '        originalMessage = data["message"]["data"]\n        originalTopicPath=data["message"].get("attributes").get("originalTopicPath")\n' if kind == 'appPubSub' else ''
-        idempotencyCheck = '        messageId = data["message"]["messageId"]\n        if db.read({"_id": messageId},"PubSubMessages",findOne=True):\n            return jsonify({"message": "Message already processed","status":200,"data":None,"currentUser":None}), 200\n' if kind == 'appPubSub' else ''
+        idempotencyCheck = '        messageId = data["message"]["messageId"]\n        if messageId != None and db.read({"_id": messageId},"PubSubMessages",findOne=True):\n            return jsonify({"message": "Message already processed","status":200,"data":None,"currentUser":None}), 200\n' if kind == 'appPubSub' else ''
         jwt_decorator = '@jwt_required()' if meta['jwtRequired'] else ''
         current_user_code = '        current_user = get_jwt_identity()\n' if (
             meta['jwtRequired'] and not meta['createAccessToken']) else ''
@@ -337,7 +337,7 @@ if __name__ == '__main__':
                 response_code = f'    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
         if kind == 'appPubSub':
 
-            response_code = f'    try:\n        db.create({{"_id":messageId,"_version":0}},"PubSubMessages")\n    except:\n        pass\n    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
+            response_code = f'    if messageId != None:\n        try:\n            db.create({{"_id":messageId,"_version":0}},"PubSubMessages")\n        except:\n            pass\n    return jsonify({{"message": "{meta["successMessage"]}", "status":200, "data": res}}), 200'
 
         if kind == 'app':
             body_call = f"{className}().{name}({params.comma_join()})" if params.names else f"{className}().{name}(data)"
