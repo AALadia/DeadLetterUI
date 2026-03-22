@@ -28,8 +28,7 @@ class Path(BaseModel):
             return v
         if not isinstance(v, str):
             raise ValueError("Path must be a string")
-        if not v.endswith("/"):
-            raise ValueError("Path must end with a '/'")
+        v = v.rstrip("/") + "/"
         if not v.startswith("http"):
             raise ValueError("Path must be a valid URL starting with http:// or https://")
         return v
