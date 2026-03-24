@@ -322,6 +322,14 @@ def pubSubDecorator(projectNameConsumers: list[AbstractService]):
             )
 
     def decorator(func):
+        sig = inspect.signature(func)
+        if 'publishToProdPubSub' in sig.parameters:
+            param = sig.parameters['publishToProdPubSub']
+            if param.default is not inspect._empty:
+                raise ValueError(
+                    f"{func.__name__}: publishToProdPubSub must not have a default value. "
+                    "The value is controlled by the @pubSubDecorator."
+                )
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
