@@ -4,6 +4,7 @@ from mongoDb import db
 from emailSender import send_mail
 from functions import _getAllUsersToSendDeadLetterCreationEmail
 import json
+import html
 from pubSubPublisherAndSubscriber import publisher
 from ApiRequests import DeadLetterActions as _DeadLetterActions
 from functions import _replayDeadLetter
@@ -99,6 +100,27 @@ class DeadLetterActions():
         try:
             _replayDeadLetter(messageId,'prod',None)
         except:
+            # Read updated dead letter to get serviceErrorMessage entries
+            updated = db.read({'_id': messageId}, 'DeadLetters', findOne=True)
+            service_errors = updated.get('serviceErrorMessage', []) if updated else []
+
+            if service_errors:
+                rows = ""
+                for err in service_errors:
+                    endpoint = html.escape(str(err.get('serviceEndpoint', '')))
+                    traceback_text = html.escape(str(err.get('traceback', '')))
+                    rows += f"<tr><td style=\"padding:6px 8px; vertical-align:top;\">{endpoint}</td><td style=\"padding:6px 8px; vertical-align:top; color:#b91c1c;\">{traceback_text}</td></tr>"
+
+                error_section = f"""
+            <h3 style="margin:24px 0 8px; font-size:16px; color:#b91c1c;">Failed Service Endpoints</h3>
+            <table class="meta-table" role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr><th style="width:180px; background:#f1f5f9; font-weight:600; padding:6px 8px;">Endpoint</th><th style="background:#f1f5f9; font-weight:600; padding:6px 8px;">Error</th></tr>
+                {rows}
+            </table>"""
+
+                anchor = '<p style="margin-top:24px; font-size:13px;">'
+                html_email = html_email.replace(anchor, error_section + "\n            " + anchor)
+
             if recipient_emails:
                 try:
                     send_mail(recipient_emails, subject, html_email)
