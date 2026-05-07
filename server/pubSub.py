@@ -1,7 +1,5 @@
 from google.cloud import pubsub_v1
-from google.oauth2 import service_account
 from AppConfig import AppConfig
-import os
 import datetime
 import json
 import base64
@@ -113,33 +111,41 @@ def createMockData(mockData: MockData, pubSubMockDb: PubSubMockDb) -> MockData:
 
 class PubSub():
 
-    def __init__(self, credentials: service_account.Credentials = None):
-
+    def __init__(self):
         self.isProductionEnvironment = AppConfig().getIsProductionEnvironment()
+        self._publisher = None
+        self._subscriber = None
+        self._projectId = None
 
-        if credentials is not None and self.isProductionEnvironment:
-            raise Exception(
-                'Cannot use service account credentials in production environment'
-            )
+    def _ensureClients(self):
+        if self._publisher is not None:
+            return
+        credentials, project_id = google.auth.default()
+        self._publisher = pubsub_v1.PublisherClient(credentials=credentials)
+        self._subscriber = pubsub_v1.SubscriberClient(credentials=credentials)
+        self._projectId = project_id
 
-        # if server is run on development or test we use service account credentials
-        if not self.isProductionEnvironment:
-            self.projectId = credentials.project_id
-            self.publisher = pubsub_v1.PublisherClient(credentials=credentials)
-            self.subscriber = pubsub_v1.SubscriberClient(
-                credentials=credentials)
-        else:
-            credentials, project_id = google.auth.default()
-            self.publisher = pubsub_v1.PublisherClient(credentials=credentials)
-            self.subscriber = pubsub_v1.SubscriberClient(credentials=credentials)
-            self.projectId = project_id
+    @property
+    def projectId(self):
+        self._ensureClients()
+        return self._projectId
+
+    @property
+    def publisher(self):
+        self._ensureClients()
+        return self._publisher
+
+    @property
+    def subscriber(self):
+        self._ensureClients()
+        return self._subscriber
 
     def _checkIfTopicExists(self, topicName):
         topicPath = self.publisher.topic_path(self.projectId, topicName)
         try:
             self.publisher.get_topic(request={"topic": topicPath})
             return True
-        except Exception as e:
+        except Exception:
             return False
 
     def publishMessage(
@@ -281,30 +287,13 @@ def decodeMessage(message):
 class TestPubSub(PubSub, Singleton):
 
     def __init__(self):
-        # Use service account credentials for testing
-        if not AppConfig().getIsProductionEnvironment():
-            cwd = os.getcwd()
-            keyPath = cwd + r'/server/online-store-paperboy-92adc6ce5dc5.json'
-            credentials = service_account.Credentials.from_service_account_file(
-                keyPath)
-        else:
-            credentials= None
-        super().__init__(credentials=credentials)
+        super().__init__()
 
 
 class MainPubSub(PubSub, Singleton):
 
     def __init__(self):
-
-        if not AppConfig().getIsProductionEnvironment():
-            cwd = os.getcwd()
-            keyPath = cwd + r'/server/keys/starpack-b149d-ea86f6d0c9ec.json'
-            credentials = service_account.Credentials.from_service_account_file(
-                keyPath)
-        else:
-            credentials = None
-
-        super().__init__(credentials=credentials)
+        super().__init__()
 
 
 pubSub = MainPubSub()
@@ -420,7 +409,15 @@ class MockDataConsumer(Singleton):
         return {'res': res, 'message': data}
 
 
-mockDataConsumer = MockDataConsumer()
+class _LazyMockDataConsumer:
+    _instance = None
+
+    def __getattr__(self, name):
+        if _LazyMockDataConsumer._instance is None:
+            _LazyMockDataConsumer._instance = MockDataConsumer()
+        return getattr(_LazyMockDataConsumer._instance, name)
+
+mockDataConsumer = _LazyMockDataConsumer()
 
 if __name__ == '__main__':
     # Example usage
