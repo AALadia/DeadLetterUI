@@ -150,4 +150,4 @@ class DeadLetter(BaseModel):
             listServiceErrorMessage: list[ServiceErrorMessage]) -> None:
         self.status = "failed"
         self.errorMessage = errorMessage
-        self.serviceErrorMessage.extend(listServiceErrorMessage)
+        self.serviceErrorMessage = listServiceErrorMessage

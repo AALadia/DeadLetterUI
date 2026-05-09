@@ -91,7 +91,9 @@ def replayDeadLetter():
         traceback.print_exc()
         return jsonify({'message': str(e),'data':None,'status':400}), 400
 
-    return jsonify({"message": "Dead letter message replayed successfully","status":200, "current_user": current_user, "data": res}), 200
+    if res.get('status') == 'failed':
+        return jsonify({"message": res.get('errorMessage', 'Replay failed'), "status": 400, "current_user": current_user, "data": res}), 200
+    return jsonify({"message": "Dead letter message replayed successfully", "status": 200, "current_user": current_user, "data": res}), 200
 
 
 @app.route('/closeDeadLetter', methods=['POST'])

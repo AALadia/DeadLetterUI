@@ -47,10 +47,6 @@ def _replayDeadLetter(
             '_version': deadLetter.version
         }, deadLetter.model_dump(by_alias=True), 'DeadLetters')
 
-    if localOrProd == 'prod':
-        if deadLetter['status'] == "failed":
-            raise ValueError(deadLetter['errorMessage'])
-
     return deadLetter
 
 

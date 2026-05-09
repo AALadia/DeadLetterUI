@@ -70,7 +70,12 @@ export const DeadLetterTable = () => {
       const updated = res.data;
       setDeadLetters(prev => prev.map(d => d._id === id ? { ...d, ...updated } : d));
     } else {
-      setDeadLetters(prev => prev.map(d => d._id === id ? { ...d, status: 'failed' } : d));
+      const updated = res.data;
+      if (updated) {
+        setDeadLetters(prev => prev.map(d => d._id === id ? { ...d, ...updated } : d));
+      } else {
+        setDeadLetters(prev => prev.map(d => d._id === id ? { ...d, status: 'failed' } : d));
+      }
     }
   };
 
