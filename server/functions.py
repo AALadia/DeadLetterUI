@@ -2,6 +2,7 @@ import base64
 from objects import DeadLetter, User, ServiceErrorMessage
 
 from ServerRequest import ServerRequest
+from replayAuth import replayHeaders
 from utils import split_url_and_last_segment
 
 import json
@@ -72,9 +73,6 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local', 'prod'],
 
     for endPoint in endPoints:
         base_url, last_segment = split_url_and_last_segment(endPoint)
-        serverRequest = ServerRequest(
-            serverBaseUrl=base_url,
-            headers={"Content-Type": "application/json"})
         # convert to utf8 original message
         original_json = json.dumps(deadLetter.originalMessage,
                                    ensure_ascii=False,
@@ -94,6 +92,11 @@ def retryMessage(deadLetter: DeadLetter, localOrProd: Literal['local', 'prod'],
             "subscription": ""
         }
         try:
+            # A local replay goes to a typed URL: never a production token
+            serverRequest = ServerRequest(
+                serverBaseUrl=base_url,
+                headers=replayHeaders(
+                    endPoint, 'local' if localEndpoint is not None else localOrProd))
             res = serverRequest.post(last_segment, payload=payload)
             successfulEndpoints.append(endPoint)
         except Exception as e:

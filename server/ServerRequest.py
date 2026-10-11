@@ -22,7 +22,10 @@ class ServerRequest:
             server_tb = str(e)
             try:
                 body = response.json()
-                server_tb = body.get('traceback', str(e))
+                # A push handler answers a safe traceback; a refused
+                # caller (401) only a message.
+                server_tb = (body.get('traceback') or body.get('message')
+                             or str(e))
             except Exception:
                 pass
             raise ValueError(server_tb)
