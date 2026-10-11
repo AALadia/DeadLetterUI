@@ -311,3 +311,57 @@ def test_everyCommittedPushHandler_requiresAPushCaller():
             below = names[routes[0] + 1:routes[0] + 2]
             handlers[node.name] = below == ['requirePushCaller']
     assert handlers == {'createDeadLetter': True}
+
+
+def test_appCreator_emitsRequirePushCallerOnEveryPushHandler(monkeypatch):
+    """AppCreator imports (it parses) and generates the push handlers with
+    the check under their route, plus its import."""
+    for name, stub in {
+            'mongoDb':
+            _module('mongoDb', db=None, pubSubMockDb=None, mongoDb=object),
+            'pubSubPublisherAndSubscriber':
+            _module('pubSubPublisherAndSubscriber',
+                    publisher=None,
+                    subscriber=None,
+                    get_clients_for_project=None),
+            'emailSender':
+            _module('emailSender', send_mail=None),
+    }.items():
+        monkeypatch.setitem(sys.modules, name, stub)
+    for name in ('AppCreator', 'ApiRequests', 'PubSubRequests', 'functions',
+                 'route_config', 'objects', 'builderObjects'):
+        monkeypatch.delitem(sys.modules, name, raising=False)
+    import AppCreator
+    assert sys.modules['mongoDb'].db is None
+
+    creator = AppCreator.AppCreator(apiRequests=None)
+    code = (creator._imports('appPubSub') +
+            creator._all_functions_code('appPubSub'))
+
+    assert 'from callerAuth import requirePushCaller' in code
+    assert ("@main.route('/createDeadLetter', methods=['POST'])\n"
+            '@requirePushCaller\n') in code
+    assert code.count('@main.route(') == code.count('@requirePushCaller\n')
+
+
+def test_theEmail_escapesTheTopicPathAndMessageId(deadLetters, monkeypatch):
+    monkeypatch.setenv(callerAuth.MODE_ENV, 'report')
+    monkeypatch.setenv(callerAuth.REPORT_UNTIL_ENV, _REPORT_UNTIL)
+    body = {
+        'message': {
+            'data':
+            base64.b64encode(json.dumps({'unitId': 'u1'}).encode()).decode(),
+            'attributes': {
+                'originalTopicPath': 'projects/<b>p</b>/topics/<b>t</b>'
+            },
+            'messageId': '<b>m1</b>',
+        }
+    }
+    deadLetters.client.post('/createDeadLetter',
+                            json=body,
+                            base_url=f'https://{HOST}')
+
+    (html, ) = deadLetters.mails
+    assert '<b>' not in html
+    assert '<td>&lt;b&gt;m1&lt;/b&gt;</td>' in html
+    assert '<td>projects/&lt;b&gt;p&lt;/b&gt;/topics/&lt;b&gt;t&lt;/b&gt;</td>' in html

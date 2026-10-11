@@ -321,8 +321,7 @@ if __name__ == '__main__':
         jwt_decorator = '@jwt_required()' if meta['jwtRequired'] else ''
         # A push handler checks its caller's OIDC token (callerAuth.py)
         # before anything else runs.
-        caller_decorator = '@requirePushCaller
-' if kind == 'appPubSub' else ''
+        caller_decorator = '@requirePushCaller\n' if kind == 'appPubSub' else ''
         current_user_code = '        current_user = get_jwt_identity()\n' if (
             meta['jwtRequired'] and not meta['createAccessToken']) else ''
         if not params.names:
