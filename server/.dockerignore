@@ -1,0 +1,3 @@
+# Never bake a service-account key into the image (the service uses its own
+# service account through Application Default Credentials).
+online-store-paperboy-*.json

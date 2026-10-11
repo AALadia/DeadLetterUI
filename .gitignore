@@ -1,1 +1,5 @@
 server/keys/
+# Service-account keys: never commit one (the deadletter service uses its own
+# service account through Application Default Credentials).
+server/online-store-paperboy-*.json
+*-sa-key*.json
