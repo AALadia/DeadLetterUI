@@ -49,7 +49,7 @@ _USE_DB = 'mongoDb.db.client'
 
 
 def _runChild(action='', environment='localdev', extraEnv=None,
-              importPytest=False, deadLetterUri=FAKE_URI):
+              importPytest=False, deadLetterUri=FAKE_URI, cloudUris=True):
     env = {key: value for key, value in os.environ.items()
            if not key.startswith(('MONGO', 'DEADLETTER_')) and key not in
            (*localDbGuard.CLOUD_RUN_VARS, localDbGuard.OVERRIDE_VAR,
@@ -57,7 +57,7 @@ def _runChild(action='', environment='localdev', extraEnv=None,
     env['ENVIRONMENT'] = environment
     env['CHILD_ACTION'] = action
     for name in ('MONGO_URI', 'MONGO_URI_CLOUDDEV', 'MONGO_URI_ACCOUNTING',
-                 'MONGO_DUMP_URI'):
+                 'MONGO_DUMP_URI') if cloudUris else ():
         env[name] = FAKE_URI
     if deadLetterUri is not None:
         env['DEADLETTER_MONGO_URI'] = deadLetterUri
@@ -128,6 +128,15 @@ def test_aCloudEnvironment_onCloudRun_connectsToItsCluster(environment,
     assert onCloudRun['error'] is None, onCloudRun['error']
     assert FAKE_URI in onCloudRun['hosts']
     _assertRefused(offCloudRun)
+
+
+@pytest.mark.parametrize('environment', ['cloudprod', 'clouddev'])
+def test_aCloudEnvironment_offCloudRun_isRefusedBeforeItsUriIsRead(
+        environment):
+    """With no cluster URI set at all, the refusal (not the missing
+    variable) is what stops a cloud ENVIRONMENT off Cloud Run."""
+    _assertRefused(_runChild('mongoDb.mongoDb()', environment=environment,
+                             cloudUris=False))
 
 
 def test_mongoDb_commitsNoConnectionString():
