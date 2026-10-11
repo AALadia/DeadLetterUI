@@ -67,3 +67,80 @@ def test_aFailedReplay_stillShowsTheHandlersTraceback(monkeypatch):
         monkeypatch, 500,
         b'{"message": "x", "traceback": "Traceback (error id 1)"}'
     ) == 'Traceback (error id 1)'
+
+
+# ------------------- retryMessage: which replay carries one ------------------- #
+
+LOCAL_ENDPOINT = 'http://127.0.0.1:8000/updateUnit_accounting'
+
+
+@pytest.fixture
+def retry(monkeypatch, minted):
+    """functions.retryMessage with its database and GCP modules replaced
+    (mongoDb connects to the production cluster on import), recording what
+    each replay POST carried."""
+    import sys
+    import types
+
+    class _ServiceErrorMessage:
+
+        def __init__(self, **fields):
+            self.__dict__.update(fields)
+
+    stubs = {
+        'objects':
+        types.SimpleNamespace(DeadLetter=object,
+                              User=object,
+                              ServiceErrorMessage=_ServiceErrorMessage),
+        'pubSubPublisherAndSubscriber':
+        types.SimpleNamespace(subscriber=None),
+        'mongoDb':
+        types.SimpleNamespace(db=None),
+    }
+    for name, stub in stubs.items():
+        monkeypatch.setitem(sys.modules, name, stub)
+    monkeypatch.delitem(sys.modules, 'functions', raising=False)
+    import functions
+    assert sys.modules['mongoDb'] is stubs['mongoDb']
+
+    posts = []
+
+    def post(self, path, payload):
+        posts.append({'base': self.serverBaseUrl, 'headers': self.headers})
+        return {}
+
+    monkeypatch.setattr(ServerRequest, 'post', post)
+
+    def run(localOrProd, localEndpoint):
+        deadLetter = types.SimpleNamespace(
+            endPoints=[ENDPOINT],
+            originalMessage={'unitId': 'u1'},
+            messageId='m1',
+            originalTopicPath='projects/p/topics/t',
+            retryMessage=lambda: None,
+            markAsSuccess=lambda: None,
+            markAsFailed=lambda *args: None)
+        functions.retryMessage(deadLetter, localOrProd, localEndpoint)
+        return posts
+
+    return run
+
+
+def test_retryProd_sendsATokenForEachProductionEndpoint(retry, minted):
+    (sent, ) = retry('prod', None)
+
+    assert sent['headers'] == {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer id-token'
+    }
+    assert minted == [ENDPOINT]
+
+
+@pytest.mark.parametrize('localOrProd', ['prod', 'local'])
+def test_aReplayToATypedLocalEndpoint_neverCarriesAToken(
+        retry, minted, localOrProd):
+    (sent, ) = retry(localOrProd, LOCAL_ENDPOINT)
+
+    assert sent['base'] == 'http://127.0.0.1:8000/'
+    assert sent['headers'] == {'Content-Type': 'application/json'}
+    assert minted == []
