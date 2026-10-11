@@ -18,6 +18,7 @@ sys.modules before the handler is imported, and Google's certs are served
 from a key pair made here.
 """
 import base64
+import datetime
 import json
 import sys
 import time
@@ -35,6 +36,10 @@ KEY_ID = 'test-key'
 PUSH_ACCOUNT = 'starpack-b149d@appspot.gserviceaccount.com'
 REPLAY_ACCOUNT = '376095984666-compute@developer.gserviceaccount.com'
 TOPIC = 'projects/starpack-b149d/topics/createUnit_accounting'
+
+# Report mode's end: inside callerAuth.REPORT_MAX_DAYS.
+_REPORT_UNTIL = (datetime.date.today() +
+                 datetime.timedelta(days=10)).isoformat()
 
 _keys = {}
 
@@ -246,7 +251,7 @@ def test_onlyThePubSubPushAccount_mayCreateADeadLetter():
 def test_reportMode_storesAnUnverifiedDeadLetterButNeverReplaysIt(
         deadLetters, monkeypatch):
     monkeypatch.setenv(callerAuth.MODE_ENV, 'report')
-    monkeypatch.setenv(callerAuth.REPORT_UNTIL_ENV, '2999-01-01')
+    monkeypatch.setenv(callerAuth.REPORT_UNTIL_ENV, _REPORT_UNTIL)
 
     response = _push(deadLetters, _token(email=REPLAY_ACCOUNT))
 
@@ -259,7 +264,7 @@ def test_reportMode_storesAnUnverifiedDeadLetterButNeverReplaysIt(
 
 def test_reportMode_stillReplaysAVerifiedPush(deadLetters, monkeypatch):
     monkeypatch.setenv(callerAuth.MODE_ENV, 'report')
-    monkeypatch.setenv(callerAuth.REPORT_UNTIL_ENV, '2999-01-01')
+    monkeypatch.setenv(callerAuth.REPORT_UNTIL_ENV, _REPORT_UNTIL)
 
     _push(deadLetters, _token())
 
@@ -281,7 +286,7 @@ def test_outsideARequest_noAutoReplay():
 
 def test_theEmail_escapesWhatThePushSent(deadLetters, monkeypatch):
     monkeypatch.setenv(callerAuth.MODE_ENV, 'report')
-    monkeypatch.setenv(callerAuth.REPORT_UNTIL_ENV, '2999-01-01')
+    monkeypatch.setenv(callerAuth.REPORT_UNTIL_ENV, _REPORT_UNTIL)
 
     _push(deadLetters, payload={'note': '<script>alert(1)</script>'})
 

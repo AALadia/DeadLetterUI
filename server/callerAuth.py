@@ -34,9 +34,10 @@ CALLER_AUTH_REPORT_UNTIL: then a refusal is logged and the request still
 runs. That is the rollout phase (callers start sending tokens, the log shows
 who still does not), and it ends by itself:
   - CALLER_AUTH_REPORT_UNTIL is a date (report mode runs through that day,
-    UTC) or a datetime with its offset;
-  - after it, or when it is unset or unreadable (a datetime without an
-    offset included), the check enforces;
+    UTC) or a datetime with its offset, at most REPORT_MAX_DAYS ahead;
+  - after it, or when it is unset, unreadable (a datetime without an
+    offset included) or further ahead than that, the check enforces, so
+    report mode cannot be parked;
   - any other mode, or none, enforces.
 Report mode logs a WARNING when the module loads (at startup), so a service
 left in it shows up in the log.
@@ -72,6 +73,7 @@ SERVICE_CALLER_ACCOUNTS: tuple[str, ...] = ()
 MODE_ENV = 'CALLER_AUTH_MODE'
 REPORT_MODE = 'report'
 REPORT_UNTIL_ENV = 'CALLER_AUTH_REPORT_UNTIL'
+REPORT_MAX_DAYS = 30
 
 GOOGLE_CERTS_URL = 'https://www.googleapis.com/oauth2/v1/certs'
 GOOGLE_ISSUERS = ('accounts.google.com', 'https://accounts.google.com')
@@ -222,18 +224,23 @@ def _now() -> datetime.datetime:
 
 def _reportUntil() -> datetime.datetime | None:
     """When report mode ends, from CALLER_AUTH_REPORT_UNTIL; None when it is
-    unset or unreadable."""
+    unset, unreadable, or more than REPORT_MAX_DAYS ahead."""
     value = (os.getenv(REPORT_UNTIL_ENV) or '').strip()
     try:
         if len(value) == len('YYYY-MM-DD'):
             day = datetime.date.fromisoformat(value)
-            return datetime.datetime.combine(day + datetime.timedelta(days=1),
-                                             datetime.time(),
-                                             datetime.timezone.utc)
-        until = datetime.datetime.fromisoformat(value)
-    except ValueError:
+            until = datetime.datetime.combine(
+                day + datetime.timedelta(days=1), datetime.time(),
+                datetime.timezone.utc)
+        else:
+            until = datetime.datetime.fromisoformat(value)
+        if until.tzinfo is None or until - _now() > datetime.timedelta(
+                days=REPORT_MAX_DAYS):
+            return None
+    # 9999-12-31 overflows: unreadable, never a crash at startup
+    except (ValueError, OverflowError):
         return None
-    return until if until.tzinfo is not None else None
+    return until
 
 
 def _reportModeAsked() -> bool:
