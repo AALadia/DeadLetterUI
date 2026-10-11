@@ -149,6 +149,9 @@ _GUARD_EXEMPT_FILES = {'conftest.py', 'mongoDb.py', 'localDbGuard.py'}
 _CLIENT_NAMES = {'MongoClient', 'AsyncMongoClient', 'AsyncIOMotorClient'}
 _GUARD_NAME = 'assertLocalDbHostAllowed'
 _SKIPPED_DIRS = {'venv', 'node_modules', '__pycache__', '_wt'}
+_MUTATING_METHODS = {'update', 'setdefault', 'pop', 'popitem', 'clear',
+                     '__setitem__', '__delitem__', 'append', 'extend',
+                     'insert', 'remove'}
 
 
 def _walkNoDefs(node):
@@ -200,11 +203,21 @@ def _rebinds(node, host):
                    if item.optional_vars is not None]
     elif isinstance(node, ast.Delete):
         targets = node.targets
+    readsEnvironment = 'os.environ' in host or 'os.getenv' in host
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        receiver = ast.unparse(node.func.value)
+        if node.func.attr in _MUTATING_METHODS and (
+                host == receiver or
+                host.startswith((receiver + '.', receiver + '[')) or
+                (readsEnvironment and receiver == 'os.environ')):
+            return True
     for target in targets:
         for sub in ast.walk(target):
             if isinstance(sub, (ast.Name, ast.Attribute, ast.Subscript)):
                 text = ast.unparse(sub)
                 if text == host or host.startswith((text + '.', text + '[')):
+                    return True
+                if readsEnvironment and text.startswith('os.environ'):
                     return True
     return False
 
@@ -274,7 +287,21 @@ def _gateProblems(source):
                 isinstance(node.args[1], ast.Constant) and
                 node.args[1].value in _CLIENT_NAMES):
             problems.append(f'{node.lineno}: getattr of {node.args[1].value}')
+        if (isinstance(node, ast.Subscript) and
+                isinstance(node.slice, ast.Constant) and
+                node.slice.value in _CLIENT_NAMES):
+            problems.append(f'{node.lineno}: lookup of {node.slice.value}')
+        if isinstance(node, ast.Call) and isClientRef(node.func):
+            if (any(keyword.arg is None for keyword in node.keywords) and
+                    not any(keyword.arg == 'host'
+                            for keyword in node.keywords)):
+                problems.append(f'{node.lineno}: {ast.unparse(node.func)} '
+                                'with ** keywords and no explicit host=')
+            if node.args and isinstance(node.args[0], ast.Starred):
+                problems.append(f'{node.lineno}: {ast.unparse(node.func)} '
+                                'with a *-unpacked host')
 
+    examined = set()
     functions = [tree, *[node for node in ast.walk(tree) if isinstance(
         node, (ast.FunctionDef, ast.AsyncFunctionDef))]]
     for function in functions:
@@ -286,6 +313,7 @@ def _gateProblems(source):
             for call in _walkNoDefs(statement):
                 if not (isinstance(call, ast.Call) and isClientRef(call.func)):
                     continue
+                examined.add(id(call))
                 host = _hostOf(call)
                 if host is None or (isinstance(host, ast.Constant) and
                                     localDbGuard.isLocalDbHost(host.value)):
@@ -308,6 +336,13 @@ def _gateProblems(source):
                         f'{call.lineno}: {ast.unparse(call.func)}({hostText}) '
                         'without an earlier unconditional '
                         f'{_GUARD_NAME}({hostText}) in the same function')
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isClientRef(node.func) and
+                id(node) not in examined):
+            problems.append(
+                f'{node.lineno}: {ast.unparse(node.func)} built outside a '
+                'function or module body the gate checks (a lambda, class '
+                'body, default argument or decorator)')
     return problems
 
 
@@ -335,6 +370,29 @@ _GUARDED = ('from localDbGuard import assertLocalDbHostAllowed\n'
     ('import pymongo as pm\ndef f(uri):\n    pm.MongoClient(uri)\n', False),
     ('from pymongo import AsyncMongoClient\n'
      'def f(uri):\n    AsyncMongoClient(uri)\n', False),
+    ('from pymongo import MongoClient\nmake = lambda uri: MongoClient(uri)\n',
+     False),
+    ('from pymongo import MongoClient\nimport os\n'
+     'class Holder:\n    client = MongoClient(os.environ["URI"])\n', False),
+    ('from pymongo import MongoClient\nimport os\n'
+     'def f(client=MongoClient(os.environ["URI"])):\n    pass\n', False),
+    ('from pymongo import MongoClient\nimport os\n'
+     '@decorate(MongoClient(os.environ["URI"]))\ndef f():\n    pass\n',
+     False),
+    (_GUARDED + 'def f(uri):\n    assertLocalDbHostAllowed(uri)\n'
+     '    MongoClient(**{"host": uri})\n', False),
+    ('import pymongo\ndef f(uri):\n    vars(pymongo)["MongoClient"](uri)\n',
+     False),
+    (_GUARDED + 'import os\n'
+     'def f():\n    assertLocalDbHostAllowed(os.environ["URI"])\n'
+     '    os.environ.update(URI="mongodb://elsewhere")\n'
+     '    MongoClient(os.environ["URI"])\n', False),
+    (_GUARDED + 'def f(args):\n    assertLocalDbHostAllowed(*args)\n'
+     '    MongoClient(*args)\n', False),
+    (_GUARDED + 'import os\n'
+     'def f():\n    assertLocalDbHostAllowed(os.getenv("URI"))\n'
+     '    os.environ.update(URI="mongodb://elsewhere")\n'
+     '    MongoClient(os.getenv("URI"))\n', False),
     (_GUARDED + 'def f(uri):\n    assertLocalDbHostAllowed(uri)\n'
      '    uri = other()\n    MongoClient(uri)\n', False),
     (_GUARDED + 'def f(uri):\n    if False:\n'
@@ -350,7 +408,9 @@ _GUARDED = ('from localDbGuard import assertLocalDbHostAllowed\n'
      '    def g(uri):\n        MongoClient(uri)\n', False),
 ], ids=['positional', 'hostKeyword', 'literalLocalAndAnnotation',
         'unguardedHostKeyword', 'alias', 'getattr', 'partial', 'motor',
-        'moduleAlias', 'asyncClient',
+        'moduleAlias', 'asyncClient', 'lambda', 'classBody', 'defaultArgument',
+        'decoratorArgument', 'doubleStarHost', 'varsLookup',
+        'environUpdatedAfterGuard', 'starredHost', 'getenvAfterEnvironUpdate',
         'reassignedAfterGuard', 'guardUnderIf', 'localStub',
         'guardOnAnotherModule', 'guardInOuterFunction'])
 def test_theStaticGate_findsWhatItMust(source, clean):
