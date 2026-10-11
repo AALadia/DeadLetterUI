@@ -192,7 +192,8 @@ class AppCreator:
         'from flask import Blueprint, jsonify, request', 'import logging',
         'from mongoDb import mongoDb, db',
         'from PubSubRequests import PubSubRequests', 'import traceback',
-        'from pubSub import decodeMessage'
+        'from pubSub import decodeMessage',
+        'from callerAuth import requirePushCaller',
     ]
 
     APP_FLASK_CONFIG = [
@@ -318,6 +319,10 @@ if __name__ == '__main__':
         pubSubAttributes = '        originalMessage = data["message"]["data"]\n        originalTopicPath=data["message"].get("attributes").get("originalTopicPath")\n' if kind == 'appPubSub' else ''
         idempotencyCheck = '        messageId = data["message"]["messageId"]\n        if messageId != None and db.read({"_id": messageId},"PubSubMessages",findOne=True):\n            return jsonify({"message": "Message already processed","status":200,"data":None,"currentUser":None}), 200\n' if kind == 'appPubSub' else ''
         jwt_decorator = '@jwt_required()' if meta['jwtRequired'] else ''
+        # A push handler checks its caller's OIDC token (callerAuth.py)
+        # before anything else runs.
+        caller_decorator = '@requirePushCaller
+' if kind == 'appPubSub' else ''
         current_user_code = '        current_user = get_jwt_identity()\n' if (
             meta['jwtRequired'] and not meta['createAccessToken']) else ''
         if not params.names:
@@ -349,7 +354,7 @@ if __name__ == '__main__':
 
         return f"""
 @{atFunction}.route('/{name}', methods=['{meta['httpMethod']}'])
-{jwt_decorator}
+{caller_decorator}{jwt_decorator}
 def {name}():
 {parameters_check}{decode_message}{parameters_code}{pubSubAttributes}{idempotencyCheck}{current_user_code}    try:
         res = {body_call}

@@ -4,12 +4,14 @@ from mongoDb import mongoDb, db
 from PubSubRequests import PubSubRequests
 import traceback
 from pubSub import decodeMessage
+from callerAuth import requirePushCaller
 
 main = Blueprint('main', __name__)
 logging.basicConfig(level=logging.INFO)
 
 
 @main.route('/createDeadLetter', methods=['POST'])
+@requirePushCaller
 
 def createDeadLetter():
     if request.is_json:

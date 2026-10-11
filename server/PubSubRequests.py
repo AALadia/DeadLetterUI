@@ -8,6 +8,7 @@ import html
 from pubSubPublisherAndSubscriber import publisher
 from ApiRequests import DeadLetterActions as _DeadLetterActions
 from functions import _replayDeadLetter
+from replayAuth import autoReplayAllowed
 
 
 class DeadLetterActions():
@@ -44,12 +45,18 @@ class DeadLetterActions():
             pretty_original = pretty_original[:5000] + "\n... (truncated)"
 
         subject = f"Dead Letter: {deadLetterObject.originalTopicPath}"
+        # Everything the push sent is the sender's text: escaped before it
+        # goes into the email's HTML.
+        safeTopicPath = html.escape(str(deadLetterObject.originalTopicPath))
+        safeProjectId = html.escape(str(deadLetterObject.publisherProjectId))
+        safeMessageId = html.escape(str(messageId))
+        safeOriginal = html.escape(pretty_original)
         html_email = f"""
 <!DOCTYPE html>
 <html lang=\"en\">
 <head>
     <meta charset=\"UTF-8\" />
-    <title>New Dead Letter - {deadLetterObject.originalTopicPath}</title>
+    <title>New Dead Letter - {safeTopicPath}</title>
     <meta name=\"color-scheme\" content=\"light dark\" />
     <style>
         body {{ font-family: Arial, sans-serif; background:#f5f7fa; margin:0; padding:24px; }}
@@ -74,18 +81,18 @@ class DeadLetterActions():
     <div class=\"card\">
         <div class=\"header\">
             <h1>New Dead Letter Created</h1>
-            <p style=\"margin:4px 0 0; font-size:13px; opacity:.85;\">Project: {deadLetterObject.publisherProjectId})</p>
+            <p style=\"margin:4px 0 0; font-size:13px; opacity:.85;\">Project: {safeProjectId})</p>
         </div>
         <div style=\"padding:24px; color:#0f172a;\">
             <p style=\"margin-top:0;\">A new dead letter message has been captured and stored in the dashboard.</p>
             <table class=\"meta-table\" role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">
-                <tr><th>ID</th><td>{messageId}</td></tr>
-                <tr><th>Topic Name</th><td>{originalTopicPath}</td></tr>
+                <tr><th>ID</th><td>{safeMessageId}</td></tr>
+                <tr><th>Topic Name</th><td>{safeTopicPath}</td></tr>
                 <tr><th>Stored Collection</th><td>DeadLetters</td></tr>
                 <tr><th>Replay Instructions</th><td>Use the dashboard action 'Retry' or the API endpoint for replay.</td></tr>
             </table>
             <h3 style=\"margin:0 0 8px; font-size:16px;\">Original Message Payload</h3>
-            <pre>{pretty_original}</pre>
+            <pre>{safeOriginal}</pre>
             <p style=\"margin-top:24px; font-size:13px;\">If this dead letter was expected you can ignore this message. Otherwise investigate the error and retry from the dashboard.</p>
             <div class=\"footer\">This is an automated notification – please do not reply directly.</div>
         </div>
@@ -96,10 +103,17 @@ class DeadLetterActions():
         res = db.create(deadLetterObject.model_dump(by_alias=True),
                         'DeadLetters')
 
-        #we try to retry to produce an error message 
-        try:
-            _replayDeadLetter(messageId,'prod',None)
-        except:
+        # Replayed to production by itself, with this service's token, only
+        # for a push callerAuth verified (replayAuth.autoReplayAllowed). A
+        # replay that fails, or that does not run, emails the watchers.
+        replayed = False
+        if autoReplayAllowed():
+            try:
+                _replayDeadLetter(messageId, 'prod', None)
+                replayed = True
+            except Exception:
+                pass
+        if not replayed:
             # Read updated dead letter to get serviceErrorMessage entries
             updated = db.read({'_id': messageId}, 'DeadLetters', findOne=True)
             service_errors = updated.get('serviceErrorMessage', []) if updated else []
