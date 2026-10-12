@@ -5,7 +5,7 @@ import datetime
 from utils import updateData
 from pydantic_core import Url
 from pubSubPublisherAndSubscriber import publisher, subscriber, get_clients_for_project
-from google.api_core.exceptions import PermissionDenied
+from google.api_core.exceptions import NotFound, PermissionDenied
 
 
 class User(BaseModel):
@@ -132,7 +132,9 @@ class DeadLetter(BaseModel):
                         request={"subscription": sub})
                     if sub.push_config and sub.push_config.push_endpoint:
                         endpoints.append(sub.push_config.push_endpoint)
-            except PermissionDenied as e:
+            # NotFound: the original topic was deleted since; keep the dead
+            # letter (no endpoints, so no auto-replay) rather than lose it.
+            except (PermissionDenied, NotFound):
                 endpoints = None
 
             self.endPoints = endpoints
