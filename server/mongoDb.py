@@ -2,8 +2,17 @@ from pymongo import MongoClient, ReturnDocument
 from pymongo.server_api import ServerApi
 from pymongo.errors import ConnectionFailure, OperationFailure
 from AppConfig import AppConfig
+from localDbGuard import assertCloudDbAllowed, assertLocalDbHostAllowed
 import time
 import os
+
+
+def _newMongoClient(host=None, *args, **kwargs) -> MongoClient:
+    """Every client this module builds. A non-local host or a proxy is
+    refused off Cloud Run, without ALLOW_PROD_DB_FROM_LOCAL=1, and in every
+    test run (localDbGuard)."""
+    assertLocalDbHostAllowed(host, kwargs)
+    return MongoClient(host, *args, **kwargs)
 
 
 class Singleton:
@@ -30,34 +39,39 @@ class mongoDb():
                 raise Exception(
                     'Database name is required when custom uri is provided')
 
-            self.client = MongoClient(uri,
-                                      server_api=ServerApi('1'),
-                                      tz_aware=True)
+            self.client = _newMongoClient(uri,
+                                           server_api=ServerApi('1'),
+                                           tz_aware=True)
 
         # connect to the appropriate uri based on the environment
         elif AppConfig().getEnvironment() == 'cloudprod':
+            assertCloudDbAllowed()
             uri = os.getenv('MONGO_URI')
 
             if uri is None:
                 raise Exception(
                     'MONGO_URI environment variable is not set')
 
-            self.client = MongoClient(uri,
-                                      server_api=ServerApi('1'),
-                                      tz_aware=True)
+            self.client = _newMongoClient(uri,
+                                           server_api=ServerApi('1'),
+                                           tz_aware=True)
 
         elif AppConfig().getEnvironment() == 'clouddev':
-            uri = "mongodb+srv://ladia123:Bigreddog12.@cluster0.pgvpdb1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-            self.client = MongoClient(uri,
-                                      server_api=ServerApi('1'),
-                                      tz_aware=True)
+            assertCloudDbAllowed()
+            uri = os.getenv('MONGO_URI_CLOUDDEV')
+            if uri is None:
+                raise Exception(
+                    'MONGO_URI_CLOUDDEV environment variable is not set')
+            self.client = _newMongoClient(uri,
+                                           server_api=ServerApi('1'),
+                                           tz_aware=True)
 
         # testEnvironment is used for automated testing while the actual is used for production / development
         elif AppConfig().getEnvironment() == 'localdev':
-            self.client = MongoClient('localhost', 27017, tz_aware=True)
+            self.client = _newMongoClient('localhost', 27017, tz_aware=True)
 
         elif AppConfig().getEnvironment() == 'localprod':
-            self.client = MongoClient('localhost', 27017, tz_aware=True)
+            self.client = _newMongoClient('localhost', 27017, tz_aware=True)
 
         self.databaseName = AppConfig().getDatabaseName() if databaseName is None else databaseName
 
@@ -351,7 +365,7 @@ class mongoDb():
         or if the connection/command fails.
         """
         try:
-            client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+            client = _newMongoClient(uri, serverSelectionTimeoutMS=5000)
             # "isMaster" (or "hello" on newer servers) reveals replica-set info
             ismaster_info = client.admin.command("isMaster")
         except (ConnectionFailure, OperationFailure) as e:
@@ -378,8 +392,28 @@ class PubSubMockDb(mongoDb, Singleton):
         super().__init__(uri, databaseName)
 
 
+# The dead-letter database is the production cluster's, in every
+# ENVIRONMENT: its URI comes from DEADLETTER_MONGO_URI (set on the Cloud Run
+# service; never committed), read on first use, never at import.
+DEADLETTER_URI_VAR = 'DEADLETTER_MONGO_URI'
 
-db = mainDb('mongodb+srv://cloudRunDeadLetter:2Zgf5clqssM7TLCt@deadletter.hjd3a6i.mongodb.net/?retryWrites=true&w=majority&appName=deadletter','deadletter')
+
+class _LazyMainDb:
+    """The dead-letter database, built on first use."""
+
+    _db = None
+
+    def __getattr__(self, name):
+        if _LazyMainDb._db is None:
+            uri = os.getenv(DEADLETTER_URI_VAR)
+            if not uri:
+                raise Exception(
+                    f'{DEADLETTER_URI_VAR} environment variable is not set')
+            _LazyMainDb._db = mainDb(uri, 'deadletter')
+        return getattr(_LazyMainDb._db, name)
+
+
+db = _LazyMainDb()
 pubSubMockDb = PubSubMockDb(None,'pubSubMockDb')
 
 if __name__ == '__main__':
